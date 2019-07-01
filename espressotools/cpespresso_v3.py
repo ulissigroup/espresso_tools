@@ -13,8 +13,8 @@ Still a work in progress: look for FIX to identify places needing work.
 
 import os
 import string
+import collections
 import numpy as np
-from compiler.ast import flatten
 from ase.calculators.general import Calculator
 from ase import constraints
 
@@ -24,6 +24,19 @@ from .qe_units import rydberg, rydberg_over_bohr
 # rydberg = 0.5*hartree
 # bohr    = 0.52917721092
 # rydberg_over_bohr = rydberg / bohr
+
+
+def flatten(iterable):
+    '''
+    Function to replace the deprecated `compiler.ast.flatten` function. This
+    one was written by Gareth Latty and posted on Stack Overflow, so credit
+    goes to them.
+    '''
+    for el in iterable:
+        if isinstance(el, collections.Iterable) and not isinstance(el, str):
+            yield from flatten(el)
+        else:
+            yield el
 
 
 def formatfreqs(freqs):
