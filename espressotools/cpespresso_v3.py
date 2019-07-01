@@ -18,7 +18,7 @@ from compiler.ast import flatten
 from ase.calculators.general import Calculator
 from ase import constraints
 
-from espressotools.qe_units import rydberg, rydberg_over_bohr
+from .qe_units import rydberg, rydberg_over_bohr
 # from (qe_)constants
 # hartree = 27.21138505
 # rydberg = 0.5*hartree

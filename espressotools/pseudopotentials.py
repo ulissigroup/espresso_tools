@@ -8,7 +8,7 @@ Includes PBE and PBEsol quantum espresso (.UPF) pseudopotentials from
 Defaults to GBRV as USP.
 """
 import os
-from espressotools.custom import custom_usersettings
+from .custom import custom_usersettings
 
 
 def get_pseudopotential_path():
