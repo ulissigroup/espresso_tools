@@ -12,31 +12,20 @@ Still a work in progress: look for FIX to identify places needing work.
 """
 
 import os
+import re
 import string
-import collections
 import numpy as np
 from ase.calculators.general import Calculator
 from ase import constraints
-
 from .qe_units import rydberg, rydberg_over_bohr
-# from (qe_)constants
-# hartree = 27.21138505
-# rydberg = 0.5*hartree
-# bohr    = 0.52917721092
-# rydberg_over_bohr = rydberg / bohr
 
 
-def flatten(iterable):
-    '''
-    Function to replace the deprecated `compiler.ast.flatten` function. This
-    one was written by Gareth Latty and posted on Stack Overflow, so credit
-    goes to them.
-    '''
-    for el in iterable:
-        if isinstance(el, collections.Iterable) and not isinstance(el, str):
-            yield from flatten(el)
-        else:
-            yield el
+# If we're on Python 2...
+try:
+    from compiler.ast import flatten
+# or Python 3...
+except ImportError:
+    from .utils import flatten
 
 
 def formatfreqs(freqs):
@@ -2151,29 +2140,49 @@ class cpespresso(Calculator):
             # extract pseudopotential type (for ordering in the input file)
             ##########################################
             #p = os.popen('egrep \'pseudopotential|pseudo_type\' %s | tr \'"\' \' \'' %(pspfile),'r' )
-            p = os.popen(
-                'egrep \'pseudopotential|pseudo_type\' %s | tail -n1 | tr \'"\' \' \'' %
-                (pspfile), 'r')
-            for y in p.readline().split():
-                if any([i in y for i in ['NC', 'SL', 'US', 'PAW', '1/r']]):
-                    pptype[el] = y
-                    break
-            p.close()
+            #p = os.popen(
+            #    'egrep \'pseudopotential|pseudo_type\' %s | tail -n1 | tr \'"\' \' \'' %
+            #    (pspfile), 'r')
+            #for y in p.readline().split():
+            #    if any([i in y for i in ['NC', 'SL', 'US', 'PAW', '1/r']]):
+            #        pptype[el] = y
+            #        break
+            #p.close()
+            with open(pspfile, 'r') as file_handle:
+                for line in file_handle:
+                    if re.search('pseudopotential', line) or re.search('pseudo_type', line):
+                        for word in line.split():
+                            if word in {'NC', 'SL', 'US', 'PAW', '1/r'}:
+                                pptype[el] = word
+                                break
+                    if el in pptype:
+                        break
             self.specdict[x].psptype = pptype[el]
             ##########################################
 
             ##########################################
             # get total number of electrons in valence
             ##########################################
-            p = os.popen(
-                r'egrep -i \'z\ valence|z_valence\' %s | tr \'"\' \' \'' %
-                (pspfile), 'r')    # standalone mod
-            for y in p.readline().split():
-                if y[0].isdigit() or y[0] == '.':
-                    # *** be careful with rounding in case of partial charges (pseudohydrogen) ***
-                    nel[el] = int(round(float(y)))
-                    break
-            p.close()
+            #p = os.popen(
+            #    r'egrep -i \'z\ valence|z_valence\' %s | tr \'"\' \' \'' %
+            #    (pspfile), 'r')    # standalone mod
+            #for y in p.readline().split():
+            #    if y[0].isdigit() or y[0] == '.':
+            #        # *** be careful with rounding in case of partial charges (pseudohydrogen) ***
+            #        nel[el] = int(round(float(y)))
+            #        break
+            #p.close()
+            with open(pspfile, 'r') as file_handle:
+                for line in file_handle:
+                    if re.search('valence', line) or re.search('z_valence', line):
+                        for word in line.split():
+                            try:
+                                nel[el] = int(round(float(word)))
+                                break
+                            except ValueError:
+                                pass
+                    if el in nel:
+                        break
             ##########################################
             if verbose:
                 print(
@@ -2944,10 +2953,11 @@ class cpespresso(Calculator):
         for specie in self.species_order:
             spec = self.specdict[specie]
             if self.setups and spec.s in self.setups.keys():
-                print('.UPF', file=f)
+                print('%s %s %s' % (specie, num2str(spec.mass), self.setups[spec.s]),
+                      file=f)
             else:
                 # default Dacapo element name USP
-                print('.UPF', file=f)
+                print('%s %s %s.UPF' % (specie, num2str(spec.mass), spec.s), file=f)
 
         print('ATOMIC_POSITIONS { %s }' % (self.coordunits), file=f)
         if len(simpleconstr) == 0:
@@ -2996,8 +3006,7 @@ class cpespresso(Calculator):
             x = np.shape(kp)
             if len(x) == 1:
                 print('K_POINTS automatic', file=f)
-                print(kp[0], kp[1], kp[2], file=f)
-                print(kpshift[0], kpshift[1], kpshift[2], file=f)
+                print(kp[0], kp[1], kp[2], kpshift[0], kpshift[1], kpshift[2], file=f)
             else:
                 print('K_POINTS crystal', file=f)
                 print(x[0], file=f)
