@@ -8,7 +8,8 @@ Includes PBE and PBEsol quantum espresso (.UPF) pseudopotentials from
 Defaults to GBRV as USP.
 """
 import os
-from .custom import custom_usersettings
+import socket
+from .custom import hpc_settings
 
 
 def get_pseudopotential_path():
@@ -25,8 +26,10 @@ def get_pseudopotential_path():
 
     :return: the full path housing these directories.
     """
-    # return '/g/g22/varley2/pseudo/'
-    return custom_usersettings('pseudopath')
+    host_name = socket.gethostname()
+    settings = hpc_settings(host_name)
+    path = settings['psp_path']
+    return path
 
 
 def populate_pseudopotentials(database, xcf='PBE'):
@@ -37,7 +40,6 @@ def populate_pseudopotentials(database, xcf='PBE'):
     Defaults to 'PBE' and currently only accepts 'PBE' or 'PBEsol'.
     :return: pspdir, setups for input into the espresso calculator
     """
-
     pseudopath = get_pseudopotential_path()
 
     keylist = ['SSSP_acc', 'SSSP_eff', 'GBRV', 'brandon', 'manual', 'JACAPO']

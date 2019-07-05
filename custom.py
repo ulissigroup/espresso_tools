@@ -1,31 +1,37 @@
-""" Standardization of pseudopotentials in self-contained dictionaries.
+'''
+Contains a function that returns various Quantum Espresso settings given the
+host that you're on.
+'''
 
-Includes PBE and PBEsol quantum espresso (.UPF) pseudopotentials from
- - GBRV high-throughput Vanderbilt USP          [ https://www.physics.rutgers.edu/gbrv/#Li ]
- - Standard Solid State Pseudopotentials (SSSP) [ http://materialscloud.org/sssp/ ]
- - Various user-defined ones
-
-Defaults to GBRV as USP.
-"""
-import os
+__authors__ = ['Joel Varley', 'Kevin Tran']
+__emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
 
-def custom_usersettings(parameter):
-    """ Get the path of where the standardized pseudopotential directories and files are stored.
-    :return: the full path housing these directories.
-    """
-    homepath = '/usr/workspace/woodgrp/catalysis/Codes/q-e-modified-pprism_beef/bin'
-    d_custom_usersettings = {
-        'pseudopath': '/usr/workspace/woodgrp/catalysis/pseudo',
-        'executablepath_quartz': os.path.join(
-            homepath,
-            'bin/espresso/quartz/espresso-6.0/cp.x'),
-        'resub_executablepath': os.path.join(
-            homepath,
-            'bin/pylib/espressotools/insert_job_dependency.py'),
-    }
-    if parameter in d_custom_usersettings:
-        customval = d_custom_usersettings[parameter]
-    else:
-        customval = None
-    return customval
+def hpc_settings(host_name):
+    '''
+    Given the name of the host, returns a dictionary with certain information
+    that Quantum Espresso needs to run.
+
+    Arg:
+        host_name   A string indicating which host you're using.
+    Returns:
+        settings    A dictionary whose keys are 'qe_executable' and 'psp_path'.
+                    The values are strings showing where the Quantum Espresso
+                    executable file and the folder of pseudopotentials are,
+                    respectively.
+    '''
+    if 'quartz' in host_name:
+        settings = {'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
+                                      '/q-e-modified-pprism_beef/bin/pw.x'),
+                    'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
+                    'nodes': 4,
+                    'cores_per_node': 36}
+
+    elif 'lassen' in host_name:
+        settings = {'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
+                                      '/q-e-modified-pprism_beef/bin/pw.x'),
+                    'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
+                    'nodes': 4,
+                    'cores_per_node': 44}
+
+    return settings

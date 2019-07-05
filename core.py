@@ -13,6 +13,7 @@ import ase.io
 from .cpespresso_v3 import espresso
 from .pseudopotentials import populate_pseudopotentials
 from .qe_pw2traj import write_traj
+from .custom import hpc_settings
 
 PSP_DIRS = {'quartz': '/usr/WS1/woodgrp/catalysis/espresso_tool/pseudo/',
             'lassen': '/usr/WS1/woodgrp/catalysis/espresso_tool/pseudo/'}
@@ -121,9 +122,13 @@ def decode_trajhex_to_atoms(hex_, index=-1):
 
 def _run_on_quartz():
     ''' Runs Quantum Espresso on Quartz '''
-    pw_executable = '/usr/WS1/woodgrp/catalysis/Codes/q-e-modified-pprism_beef/bin/pw.x'
-    nodes = 4
-    ntasks = nodes * 36
+    # Get and distribute the HPC settings
+    settings = hpc_settings('quartz')
+    pw_executable = settings['qe_executable']
+    nodes = settings['nodes']
+    ntasks = nodes * settings['cores_per_node']
+
+    # Run
     command = ('srun --nodes=%i --ntasks=%i %s -in pw.in'
                % (nodes, ntasks, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
@@ -131,9 +136,13 @@ def _run_on_quartz():
 
 def _run_on_lassen():
     ''' Runs Quantum Espresso on Lassen '''
-    pw_executable = '/usr/WS1/woodgrp/catalysis/Codes/q-e-modified-pprism_beef/bin/pw.x'
-    nodes = 4
-    ntasks = nodes * 44
+    # Get and distribute the HPC settings
+    settings = hpc_settings('lassen')
+    pw_executable = settings['qe_executable']
+    nodes = settings['nodes']
+    ntasks = nodes * settings['cores_per_node']
+
+    # Run
     command = ('jsrun --nodes=%i --ntasks=%i %s -in pw.in'
                % (nodes, ntasks, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
