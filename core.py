@@ -34,18 +34,26 @@ def run_qe(atom_hex, qe_settings):
                     string
         energy      The final potential energy of the system [eV]
     '''
-    # First, create the input file
-    host_name = socket.gethostname()
+    # First, figure out what host we're on. This tells us how to create the
+    # input file.
+    node_name = socket.gethostname()
+    if 'quartz' in node_name:
+        host_name = 'quartz'
+    elif 'lassen' in node_name:
+        host_name = 'lassen'
+    else:
+        raise RuntimeError('Using node %s, but we do not recognize it. Please '
+                           'add it to espresso_tools.custom' % node_name)
     create_input_file(atom_hex, qe_settings, host_name)
 
     # Get the host name, which tells us how to run the job
     print('Job started on %s at %s' % (host_name, datetime.now()))
-    if 'quartz' in host_name:
+    if host_name == 'quartz':
         _run_on_quartz()
-    elif 'lassen' in host_name:
+    elif host_name == 'lassen':
         _run_on_lassen()
     else:
-        raise RuntimeError('espressotools does not yet have directions for '
+        raise RuntimeError('espresso_tools does not yet have directions for '
                            'running on this host.')
     print('Job ended on %s' % datetime.now())
 
