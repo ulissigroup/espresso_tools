@@ -73,30 +73,19 @@ def create_input_file(atom_hex, qe_settings):
     # Get the location of the pseudopotentials
     pspdir, setups = populate_pseudopotentials(qe_settings['psps'])
 
-    # Set the k-point shift
-    if qe_settings['gammac'] is True:
-        kpshift = (0, 0, 0)
-    elif qe_settings['gammac'] is False:
-        kpshift = (1, 1, 1)
-    else:
-        raise SyntaxError('%s is not a valid input for the gammac argument'
-                          % qe_settings['gammac'])
-
     # Use espressotools to do the heavy lifting
     calc = espresso(calcmode=qe_settings['mode'],
                     xc=qe_settings['xcf'],
                     # [pw] eV, wave function cutoff, chg density cutoff 'dw'
                     # defaults to 10*pw
                     pw=qe_settings['encut'],
-                    kptshift=kpshift,
+                    kptshift=(0, 0, 0),
                     spinpol=qe_settings['spol'],
-                    # [nbands] negative bands implies extra bands from HOMO
-                    nbands=qe_settings['nbands'],
                     psppath=qe_settings['pspdir'],
                     setups=qe_settings['setups'],
                     # [sigma] eV, defaults to 0 smearing fixed-occupations; set to
                     # non-zero for gaussian smearing
-                    sigma=0.1,
+                    sigma=qe_settings['sigma'],
                     deuterate=0)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])
     calc.initialize(atoms)
@@ -129,7 +118,7 @@ def _run_on_quartz():
     ''' Runs Quantum Espresso on Quartz '''
     pw_executable = '/usr/WS1/woodgrp/catalysis/Codes/q-e-modified-pprism_beef/bin/pw.x'
     nodes = 4
-    ntasks = 144
+    ntasks = nodes * 36
     command = ('srun --nodes=%i --ntasks=%i %s -in pw.in'
                % (nodes, ntasks, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
@@ -139,7 +128,7 @@ def _run_on_lassen():
     ''' Runs Quantum Espresso on Lassen '''
     pw_executable = '/usr/WS1/woodgrp/catalysis/Codes/q-e-modified-pprism_beef/bin/pw.x'
     nodes = 4
-    ntasks = 144
-    command = ('srun --nodes=%i --ntasks=%i %s -in pw.in'
+    ntasks = nodes * 44
+    command = ('jsrun --nodes=%i --ntasks=%i %s -in pw.in'
                % (nodes, ntasks, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
