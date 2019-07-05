@@ -6,4 +6,4 @@ CMU's GASpy.
 __author__ = 'Kevin Tran'
 __email__ = 'ktran@andrew.cmu.edu'
 
-from .core import create_input_file  # noqa: F401
+from .core import create_input_file, run_qe  # noqa: F401
