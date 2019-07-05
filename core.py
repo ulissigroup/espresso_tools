@@ -96,7 +96,7 @@ def create_input_file(atom_hex, qe_settings, host_name):
                     kptshift=(0, 0, 0),
                     spinpol=qe_settings['spol'],
                     psppath=PSP_DIRS[host_name],
-                    setups=qe_settings['setups'],
+                    setups=setups,
                     # [sigma] eV, defaults to 0 smearing fixed-occupations; set to
                     # non-zero for gaussian smearing
                     sigma=qe_settings['sigma'],
