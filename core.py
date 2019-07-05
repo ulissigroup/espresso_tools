@@ -14,6 +14,9 @@ from .cpespresso_v3 import espresso
 from .pseudopotentials import populate_pseudopotentials
 from .qe_pw2traj import write_traj
 
+PSP_DIRS = {'quartz': '/usr/WS1/woodgrp/catalysis/espresso_tool/pseudo/',
+            'lassen': '/usr/WS1/woodgrp/catalysis/espresso_tool/pseudo/'}
+
 
 def run_qe(atom_hex, qe_settings):
     '''
@@ -31,10 +34,10 @@ def run_qe(atom_hex, qe_settings):
         energy      The final potential energy of the system [eV]
     '''
     # First, create the input file
-    create_input_file(atom_hex, qe_settings)
+    host_name = socket.gethostname()
+    create_input_file(atom_hex, qe_settings, host_name)
 
     # Get the host name, which tells us how to run the job
-    host_name = socket.gethostname()
     print('Job started on %s at %s' % (host_name, datetime.now()))
     if 'quartz' in host_name:
         _run_on_quartz()
@@ -54,7 +57,7 @@ def run_qe(atom_hex, qe_settings):
     return atoms_name, traj_hex, energy
 
 
-def create_input_file(atom_hex, qe_settings):
+def create_input_file(atom_hex, qe_settings, host_name):
     '''
     This is the main wrapper between GASpy and espressotools. It'll take an
     atoms object in hex form, some Quantum Espresso settings whose defaults can
@@ -66,6 +69,8 @@ def create_input_file(atom_hex, qe_settings):
         qe_settings     A dictionary containing various Quantum Espresso settings.
                         You may find a good set of defaults somewhere in in
                         `gaspy.defaults`
+        host_name       A string indicating which host you're using. Helps us
+                        decide where to look for the pseudopotentials.
     '''
     # Parse the atoms object
     atoms = decode_trajhex_to_atoms(atom_hex)
@@ -81,7 +86,7 @@ def create_input_file(atom_hex, qe_settings):
                     pw=qe_settings['encut'],
                     kptshift=(0, 0, 0),
                     spinpol=qe_settings['spol'],
-                    psppath=qe_settings['pspdir'],
+                    psppath=PSP_DIRS[host_name],
                     setups=qe_settings['setups'],
                     # [sigma] eV, defaults to 0 smearing fixed-occupations; set to
                     # non-zero for gaussian smearing
