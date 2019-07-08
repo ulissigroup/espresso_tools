@@ -184,6 +184,6 @@ def _run_on_lsf(nodes, cores_per_node, pw_executable):
     Arg:
         atoms   `ase.Atoms` object that will be run
     '''
-    command = ('jsrun --nnrs=%i --cpus_per_rs=%i %s -in pw.in'
+    command = ('jsrun --nrs=%i --cpu_per_rs=%i %s -in pw.in'
                % (nodes, cores_per_node, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
