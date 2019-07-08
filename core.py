@@ -8,7 +8,6 @@ __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
 import subprocess
 import socket
-from datetime import datetime
 import ase.io
 from .cpespresso_v3 import espresso
 from .pseudopotentials import populate_pseudopotentials
@@ -43,10 +42,8 @@ def run_qe(atom_hex, qe_settings):
 
     # Create the input file, then call the appropriate job manager to actually
     # run QE
-    print('Job started on %s at %s' % (host_name, datetime.now()))
     atoms = create_input_file(atom_hex, qe_settings, host_name)
     _call_job_manager(host_name, atoms)
-    print('Job ended on %s' % datetime.now())
 
     # Parse the output
     images = write_traj()
