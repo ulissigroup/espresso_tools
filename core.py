@@ -135,19 +135,18 @@ def _call_job_manager(host_name, atoms):
     # Get and distribute the HPC settings
     settings = hpc_settings(host_name)
     nodes = settings['nodes']
-    n_tasks = nodes * settings['cores_per_node']
+    cores_per_node = settings['cores_per_node']
     pw_executable = settings['qe_executable']
 
     # Use heuristics to trim down run conditions for small systems
     if len(atoms) <= 5:
         nodes = 1
-        n_tasks = settings['cores_per_node']
 
     # Call the HPC-specific command to actually run
     if host_name == 'quartz':
-        _run_on_slurm(nodes, n_tasks, pw_executable)
+        _run_on_slurm(nodes, cores_per_node, pw_executable)
     elif host_name == 'lassen':
-        _run_on_lsf(nodes, n_tasks, pw_executable)
+        _run_on_lsf(nodes, cores_per_node, pw_executable)
     else:
         raise RuntimeError('espresso_tools does not yet know what job manager '
                            'that %s uses. Please modify '
@@ -155,35 +154,36 @@ def _call_job_manager(host_name, atoms):
                            % host_name)
 
 
-def _run_on_slurm(nodes, n_tasks, pw_executable):
+def _run_on_slurm(nodes, cores_per_node, pw_executable):
     '''
     Calls Quantum Espresso on Quartz
 
     Args:
         nodes           An integer indicating how many nodes you want to run on
-        n_tasks         An integer indicating the total number of threads you
-                        want to run with
+        cores_per_node  An integer indicating the total number of cores you
+                        want to use per node
         pw_executable   A string indicating the location of the Quantum
                         Espresso executable file you want to use
     '''
+    n_tasks = nodes * cores_per_node
     command = ('srun --nodes=%i --n_tasks=%i %s -in pw.in'
                % (nodes, n_tasks, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
 
 
-def _run_on_lsf(nodes, n_tasks, pw_executable):
+def _run_on_lsf(nodes, cores_per_node, pw_executable):
     '''
     Calls Quantum Espresso on Lassen
 
     Args:
         nodes           An integer indicating how many nodes you want to run on
-        n_tasks         An integer indicating the total number of threads you
-                        want to run with
+        cores_per_node  An integer indicating the total number of cores you
+                        want to use per node
         pw_executable   A string indicating the location of the Quantum
                         Espresso executable file you want to use
     Arg:
         atoms   `ase.Atoms` object that will be run
     '''
-    command = ('jsrun --nodes=%i --n_tasks=%i %s -in pw.in'
-               % (nodes, n_tasks, pw_executable))
+    command = ('jsrun --nnrs=%i --cpus_per_rs=%i %s -in pw.in'
+               % (nodes, cores_per_node, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
