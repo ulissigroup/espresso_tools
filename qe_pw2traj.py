@@ -15,19 +15,29 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from .qe_units import hartree, rydberg, bohr
 
 
-def write_traj(qe_log_name='output.log', output_traj_name='all.traj'):
+def write_traj(qe_log_name=None, output_traj_name='all.traj'):
     '''
     This is the main function in this submodule. It parses a Quantum Espresso
     log file and then writes all of the images into a single trajectory file.
 
     Args:
         qe_log_name         A string indicating the path of the Quantum Espress
-                            log file
+                            log file. If `None` then looks for a
+                            `firework-*.log` file.
         output_traj_name    A string indicating the desired name/path of the
                             output trajectory file
     Returns:
         images  A list of `ase.Atoms` objects of the trajectory
     '''
+    # When defaulting, look for a 'fireworks-*.log' file
+    if qe_log_name is None:
+        for file_ in os.listdir():
+            file_name = file_.split('.')[0]
+            file_extension = file_.split('.')[-1]
+            if 'fireworks' in file_name and file_extension == 'log':
+                qe_log_name = file_
+                break
+
     output_traj_name = 'all.traj'
     images = read_positions_qe(qe_log_name, output_traj_name)
     ase.io.write(output_traj_name, images)
