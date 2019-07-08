@@ -141,7 +141,7 @@ def _call_job_manager(host_name, atoms):
     # Use heuristics to trim down run conditions for small systems
     if len(atoms) <= 5:
         nodes = 1
-        n_tasks = max(36, settings['cores_per_node'])
+        n_tasks = settings['cores_per_node']
 
     # Call the HPC-specific command to actually run
     if host_name == 'quartz':
