@@ -24,7 +24,7 @@ def hpc_settings(host_name):
         settings = {'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
                                       '/q-e-modified-pprism_beef/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
-                    'nodes': 4,
+                    'nodes': 1,
                     'cores_per_node': 36}
 
     elif 'lassen' in host_name:
