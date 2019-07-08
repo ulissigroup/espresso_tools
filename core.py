@@ -168,7 +168,7 @@ def _run_on_slurm(nodes, cores_per_node, pw_executable):
     n_tasks = nodes * cores_per_node
     command = ('srun --nodes=%i --n_tasks=%i %s -in pw.in'
                % (nodes, n_tasks, pw_executable))
-    process = subprocess.Popen(command.split())  # noqa: F841
+    _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
 
 
 def _run_on_lsf(nodes, cores_per_node, pw_executable):
@@ -186,4 +186,4 @@ def _run_on_lsf(nodes, cores_per_node, pw_executable):
     '''
     command = ('jsrun --nrs=%i --cpu_per_rs=%i %s -in pw.in'
                % (nodes, cores_per_node, pw_executable))
-    process = subprocess.Popen(command.split())  # noqa: F841
+    _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
