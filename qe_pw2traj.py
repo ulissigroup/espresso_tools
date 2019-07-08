@@ -34,7 +34,7 @@ def write_traj(qe_log_name=None, output_traj_name='all.traj'):
         for file_ in os.listdir():
             file_name = file_.split('.')[0]
             file_extension = file_.split('.')[-1]
-            if 'fireworks' in file_name and file_extension == 'log':
+            if 'fireworks' in file_name and file_extension == 'out':
                 qe_log_name = file_
                 break
 
