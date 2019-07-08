@@ -31,8 +31,7 @@ def run_qe(atom_hex, qe_settings):
                     string
         energy      The final potential energy of the system [eV]
     '''
-    # First, figure out what host we're on. This tells us how to create the
-    # input file.
+    # First, figure out what host we're on.
     node_name = socket.gethostname()
     if 'quartz' in node_name:
         host_name = 'quartz'
@@ -41,17 +40,12 @@ def run_qe(atom_hex, qe_settings):
     else:
         raise RuntimeError('Using node %s, but we do not recognize it. Please '
                            'add it to espresso_tools.custom' % node_name)
-    create_input_file(atom_hex, qe_settings, host_name)
 
-    # Get the host name, which tells us how to run the job
+    # Create the input file, then call the appropriate job manager to actually
+    # run QE
     print('Job started on %s at %s' % (host_name, datetime.now()))
-    if host_name == 'quartz':
-        _run_on_quartz()
-    elif host_name == 'lassen':
-        _run_on_lassen()
-    else:
-        raise RuntimeError('espresso_tools does not yet have directions for '
-                           'running on this host.')
+    atoms = create_input_file(atom_hex, qe_settings, host_name)
+    _call_job_manager(host_name, atoms)
     print('Job ended on %s' % datetime.now())
 
     # Parse the output
@@ -77,6 +71,8 @@ def create_input_file(atom_hex, qe_settings, host_name):
                         `gaspy.defaults`
         host_name       A string indicating which host you're using. Helps us
                         decide where to look for the pseudopotentials.
+    Returns:
+        atoms   The `ase.Atoms` object that was decoded from the hex string.
     '''
     # Parse the atoms object
     atoms = decode_trajhex_to_atoms(atom_hex)
@@ -100,6 +96,8 @@ def create_input_file(atom_hex, qe_settings, host_name):
                     deuterate=0)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])
     calc.initialize(atoms)
+
+    return atoms
 
 
 def decode_trajhex_to_atoms(hex_, index=-1):
@@ -125,29 +123,67 @@ def decode_trajhex_to_atoms(hex_, index=-1):
     return atoms
 
 
-def _run_on_quartz():
-    ''' Runs Quantum Espresso on Quartz '''
-    # Get and distribute the HPC settings
-    settings = hpc_settings('quartz')
-    pw_executable = settings['qe_executable']
-    nodes = settings['nodes']
-    ntasks = nodes * settings['cores_per_node']
+def _call_job_manager(host_name, atoms):
+    '''
+    This function will guesstimate the number of nodes and tasks you'll need to
+    run, and then call the job manager accordingly.
 
-    # Run
-    command = ('srun --nodes=%i --ntasks=%i %s -in pw.in'
-               % (nodes, ntasks, pw_executable))
+    Args:
+        host_name   A string indicating which host you're running on
+        atoms       `ase.Atoms` object of what you are trying to relax
+    '''
+    # Get and distribute the HPC settings
+    settings = hpc_settings(host_name)
+    nodes = settings['nodes']
+    n_tasks = nodes * settings['cores_per_node']
+    pw_executable = settings['qe_executable']
+
+    # Use heuristics to trim down run conditions for small systems
+    if len(atoms) <= 5:
+        nodes = 1
+        n_tasks = max(36, settings['cores_per_node'])
+
+    # Call the HPC-specific command to actually run
+    if host_name == 'quartz':
+        _run_on_slurm(nodes, n_tasks, pw_executable)
+    elif host_name == 'lassen':
+        _run_on_lsf(nodes, n_tasks, pw_executable)
+    else:
+        raise RuntimeError('espresso_tools does not yet know what job manager '
+                           'that %s uses. Please modify '
+                           'espresso_tools.core._call_job_manager to specify.'
+                           % host_name)
+
+
+def _run_on_slurm(nodes, n_tasks, pw_executable):
+    '''
+    Calls Quantum Espresso on Quartz
+
+    Args:
+        nodes           An integer indicating how many nodes you want to run on
+        n_tasks         An integer indicating the total number of threads you
+                        want to run with
+        pw_executable   A string indicating the location of the Quantum
+                        Espresso executable file you want to use
+    '''
+    command = ('srun --nodes=%i --n_tasks=%i %s -in pw.in'
+               % (nodes, n_tasks, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
 
 
-def _run_on_lassen():
-    ''' Runs Quantum Espresso on Lassen '''
-    # Get and distribute the HPC settings
-    settings = hpc_settings('lassen')
-    pw_executable = settings['qe_executable']
-    nodes = settings['nodes']
-    ntasks = nodes * settings['cores_per_node']
+def _run_on_lsf(nodes, n_tasks, pw_executable):
+    '''
+    Calls Quantum Espresso on Lassen
 
-    # Run
-    command = ('jsrun --nodes=%i --ntasks=%i %s -in pw.in'
-               % (nodes, ntasks, pw_executable))
+    Args:
+        nodes           An integer indicating how many nodes you want to run on
+        n_tasks         An integer indicating the total number of threads you
+                        want to run with
+        pw_executable   A string indicating the location of the Quantum
+                        Espresso executable file you want to use
+    Arg:
+        atoms   `ase.Atoms` object that will be run
+    '''
+    command = ('jsrun --nodes=%i --n_tasks=%i %s -in pw.in'
+               % (nodes, n_tasks, pw_executable))
     process = subprocess.Popen(command.split())  # noqa: F841
