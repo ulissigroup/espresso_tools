@@ -9,3 +9,4 @@ __email__ = 'ktran@andrew.cmu.edu'
 # flake8:  noqa
 
 from .vanilla_qe import run_qe
+from .rism import run_rism
