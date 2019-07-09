@@ -163,7 +163,7 @@ def _run_on_slurm(nodes, cores_per_node, pw_executable):
                         Espresso executable file you want to use
     '''
     n_tasks = nodes * cores_per_node
-    command = ('srun --nodes=%i --n_tasks=%i %s -in pw.in'
+    command = ('srun --nodes=%i --ntasks=%i %s -in pw.in'
                % (nodes, n_tasks, pw_executable))
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
 
