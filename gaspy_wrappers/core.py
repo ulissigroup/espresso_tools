@@ -3,27 +3,29 @@ This module contains light wrapping tools between LLNL's espressotools and
 CMU's GASpy. Requires Python 3
 '''
 
-__authors__ = ['Joel Varley', 'Kevin Tran']
-__emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
+__authors__ = ['Kevin Tran']
+__emails__ = ['ktran@andrew.cmu.edu']
 
 import subprocess
 import socket
 import ase.io
-from .cpespresso_v3 import espresso
-from .pseudopotentials import populate_pseudopotentials
-from .qe_pw2traj import write_traj
-from .custom import hpc_settings
+from ..qe_pw2traj import write_traj
+from ..custom import hpc_settings
 
 
-def run_qe(atom_hex, qe_settings):
+def _run_qe(atom_hex, qe_settings, input_file_creator):
     '''
-    Figures out what machine you're on and then runs QE appropriately
+    Figures out what machine you're on and then runs QE appropriately. Meant to
+    be used as an abstract parent function.
 
     Args:
-        atom_hex        An `ase.Atoms` object encoded as a hex string.
-        qe_settings     A dictionary containing various Quantum Espresso settings.
-                        You may find a good set of defaults somewhere in in
-                        `gaspy.defaults`
+        atom_hex            An `ase.Atoms` object encoded as a hex string.
+        qe_settings         A dictionary containing various Quantum Espresso
+                            settings. You may find a good set of defaults
+                            somewhere in in `gaspy.defaults`
+        input_file_creator  A function that takes the `atom_hex` argument,
+                            `qe_settings` argument, and the host name and then
+                            creates an input file called `pw.in`.
     Returns:
         atoms_name  The `ase.Atoms` object converted into a string
         traj_hex    The entire `ase.Atoms` trajectory converted into a hex
@@ -38,12 +40,13 @@ def run_qe(atom_hex, qe_settings):
         host_name = 'lassen'
     else:
         raise RuntimeError('Using node %s, but we do not recognize it. Please '
-                           'add it to espresso_tools.custom' % node_name)
+                           'add it to espresso_tools.gaspy_wrappers.core'
+                           % node_name)
 
     # Create the input file, then call the appropriate job manager to actually
     # run QE
-    atoms = create_input_file(atom_hex, qe_settings, host_name)
-    _call_job_manager(host_name, atoms)
+    atoms = input_file_creator(atom_hex, qe_settings, host_name)
+    call_job_manager(host_name, atoms)
 
     # Parse the output
     images = write_traj()
@@ -52,49 +55,6 @@ def run_qe(atom_hex, qe_settings):
         traj_hex = file_handle.read().hex()
     energy = images[-1].get_potential_energy()
     return atoms_name, traj_hex, energy
-
-
-def create_input_file(atom_hex, qe_settings, host_name):
-    '''
-    This is the main wrapper between GASpy and espressotools. It'll take an
-    atoms object in hex form, some Quantum Espresso settings whose defaults can
-    be found in GASpy, and then create a Quantum Espresso output file for you
-    called 'pw.in'
-
-    Args:
-        atom_hex        An `ase.Atoms` object encoded as a hex string.
-        qe_settings     A dictionary containing various Quantum Espresso settings.
-                        You may find a good set of defaults somewhere in in
-                        `gaspy.defaults`
-        host_name       A string indicating which host you're using. Helps us
-                        decide where to look for the pseudopotentials.
-    Returns:
-        atoms   The `ase.Atoms` object that was decoded from the hex string.
-    '''
-    # Parse the atoms object
-    atoms = decode_trajhex_to_atoms(atom_hex)
-
-    # Get the location of the pseudopotentials
-    pspdir, setups = populate_pseudopotentials(qe_settings['psps'])
-
-    # Use espressotools to do the heavy lifting
-    calc = espresso(calcmode='relax',
-                    xc=qe_settings['xcf'],
-                    # [pw] eV, wave function cutoff, chg density cutoff 'dw'
-                    # defaults to 10*pw
-                    pw=qe_settings['encut'],
-                    kptshift=(0, 0, 0),
-                    spinpol=qe_settings['spol'],
-                    psppath=pspdir,
-                    setups=setups,
-                    # [sigma] eV, defaults to 0 smearing fixed-occupations; set to
-                    # non-zero for gaussian smearing
-                    sigma=qe_settings['sigma'],
-                    deuterate=0)
-    calc.set(atoms=atoms, kpts=qe_settings['kpts'])
-    calc.initialize(atoms)
-
-    return atoms
 
 
 def decode_trajhex_to_atoms(hex_, index=-1):
@@ -120,7 +80,7 @@ def decode_trajhex_to_atoms(hex_, index=-1):
     return atoms
 
 
-def _call_job_manager(host_name, atoms):
+def call_job_manager(host_name, atoms):
     '''
     This function will guesstimate the number of nodes and tasks you'll need to
     run, and then call the job manager accordingly.
@@ -147,7 +107,7 @@ def _call_job_manager(host_name, atoms):
     else:
         raise RuntimeError('espresso_tools does not yet know what job manager '
                            'that %s uses. Please modify '
-                           'espresso_tools.core._call_job_manager to specify.'
+                           'espresso_tools.core.call_job_manager to specify.'
                            % host_name)
 
 

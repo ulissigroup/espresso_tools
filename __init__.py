@@ -1,9 +1,11 @@
 '''
-This module contains light wrapping tools between LLNL's espressotools and
-CMU's GASpy.
+This module contains various tools to manage Quantum Espresso calculations, as
+well as some wrapping tools for use with GASpy.
 '''
 
 __author__ = 'Kevin Tran'
 __email__ = 'ktran@andrew.cmu.edu'
 
-from .core import create_input_file, run_qe  # noqa: F401
+# flake8:  noqa
+
+from .gaspy_wrappers.vanilla_qe import run_qe
