@@ -78,7 +78,7 @@ def create_input_file(atom_hex, qe_settings, host_name):
     pspdir, setups = populate_pseudopotentials(qe_settings['psps'])
 
     # Use espressotools to do the heavy lifting
-    calc = espresso(calcmode=qe_settings['mode'],
+    calc = espresso(calcmode='relax',
                     xc=qe_settings['xcf'],
                     # [pw] eV, wave function cutoff, chg density cutoff 'dw'
                     # defaults to 10*pw
