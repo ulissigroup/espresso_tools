@@ -76,3 +76,4 @@ def create_vanilla_input_file(atom_hex, qe_settings):
                     deuterate=0,
                     max_seconds=max_seconds)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])
+    calc.initialize(atoms)
