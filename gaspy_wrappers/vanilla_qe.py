@@ -9,6 +9,7 @@ __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 from .core import _run_qe, decode_trajhex_to_atoms
 from ..cpespresso_v3 import espresso
 from ..pseudopotentials import populate_pseudopotentials
+from ..custom import hpc_settings
 
 
 def run_qe(atom_hex, qe_settings):
@@ -35,7 +36,7 @@ def run_qe(atom_hex, qe_settings):
     return atoms_name, traj_hex, energy
 
 
-def create_vanilla_input_file(atom_hex, qe_settings, host_name):
+def create_vanilla_input_file(atom_hex, qe_settings):
     '''
     This is the main wrapper between GASpy and espressotools. It'll take an
     atoms object in hex form, some Quantum Espresso settings whose defaults can
@@ -47,14 +48,17 @@ def create_vanilla_input_file(atom_hex, qe_settings, host_name):
         qe_settings     A dictionary containing various Quantum Espresso settings.
                         You may find a good set of defaults somewhere in in
                         `gaspy.defaults`
-        host_name       A string indicating which host you're using. Helps us
-                        decide where to look for the pseudopotentials.
     '''
     # Parse the atoms object
     atoms = decode_trajhex_to_atoms(atom_hex)
 
-    # Get the location of the pseudopotentials
+    # Parse the pseudopotentials
     pspdir, setups = populate_pseudopotentials(qe_settings['psps'])
+
+    # Set the run-time to 2 minutes less than the job manager's wall time
+    settings = hpc_settings()
+    wall_time = settings['wall_time']
+    max_seconds = wall_time * 60 * 60 - 120
 
     # Use espressotools to do the heavy lifting
     calc = espresso(calcmode='relax',
@@ -69,5 +73,6 @@ def create_vanilla_input_file(atom_hex, qe_settings, host_name):
                     # [sigma] eV, defaults to 0 smearing fixed-occupations; set to
                     # non-zero for gaussian smearing
                     sigma=qe_settings['sigma'],
-                    deuterate=0)
+                    deuterate=0,
+                    max_seconds=max_seconds)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])

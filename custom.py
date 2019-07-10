@@ -33,7 +33,8 @@ def hpc_settings():
                                       '/q-e-modified-pprism_beef/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'nodes': 4,
-                    'cores_per_node': 36}
+                    'cores_per_node': 36,
+                    'wall_time': 24}  # in hours
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
@@ -41,7 +42,8 @@ def hpc_settings():
                                       '/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'nodes': 4,
-                    'cores_per_node': 44}
+                    'cores_per_node': 44,
+                    'wall_time': 12}  # in hours
 
     else:
         raise ValueError('espresso_tools does not recognize the %s node. Please '
