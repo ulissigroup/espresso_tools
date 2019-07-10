@@ -262,17 +262,14 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         # Need to ensure that molecule is all oplsaa and no remnant LJ
         # parameters?
         calc.set(rism3d_conv_thr=1E-6,
-                 laue_expand_right=90,
                  laue_starting_right=0,
                  laue_expand_left=90,
                  laue_starting_left=0,
                  laue_reference='average',
                  isolated='esm',
-                 esm_bc='bc1',
-                 kpts=(1, 1, 1),  # G-centered for RISM
-                 sigma=0.01)
+                 esm_bc='bc1')
 
-    # Set the charge manually, if desired
+    # Set the charge manually
     charge = rism_settings['charge']
     if charge:
         calc.set(tot_charge=charge)
