@@ -8,7 +8,6 @@ Includes PBE and PBEsol quantum espresso (.UPF) pseudopotentials from
 Defaults to GBRV as USP.
 """
 import os
-import socket
 from .custom import hpc_settings
 
 
@@ -26,8 +25,7 @@ def get_pseudopotential_path():
 
     :return: the full path housing these directories.
     """
-    host_name = socket.gethostname()
-    settings = hpc_settings(host_name)
+    settings = hpc_settings()
     path = settings['psp_path']
     return path
 
