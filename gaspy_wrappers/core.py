@@ -7,7 +7,6 @@ __authors__ = ['Kevin Tran']
 __emails__ = ['ktran@andrew.cmu.edu']
 
 import subprocess
-import socket
 import ase.io
 from ..qe_pw2traj import write_traj
 from ..custom import hpc_settings
@@ -32,21 +31,9 @@ def _run_qe(atom_hex, qe_settings, input_file_creator):
                     string
         energy      The final potential energy of the system [eV]
     '''
-    # First, figure out what host we're on.
-    node_name = socket.gethostname()
-    if 'quartz' in node_name:
-        host_name = 'quartz'
-    elif 'lassen' in node_name:
-        host_name = 'lassen'
-    else:
-        raise RuntimeError('Using node %s, but we do not recognize it. Please '
-                           'add it to espresso_tools.gaspy_wrappers.core'
-                           % node_name)
-
-    # Create the input file, then call the appropriate job manager to actually
-    # run QE
-    atoms = input_file_creator(atom_hex, qe_settings, host_name)
-    call_job_manager(host_name, atoms)
+    # Create the input file and then run the job
+    input_file_creator(atom_hex, qe_settings)
+    run_job()
 
     # Parse the output
     images = write_traj()
@@ -80,35 +67,55 @@ def decode_trajhex_to_atoms(hex_, index=-1):
     return atoms
 
 
-def call_job_manager(host_name, atoms):
+def run_job():
     '''
-    This function will guesstimate the number of nodes and tasks you'll need to
-    run, and then call the job manager accordingly.
-
-    Args:
-        host_name   A string indicating which host you're running on
-        atoms       `ase.Atoms` object of what you are trying to relax
+    This function will try to run the `pw.in` input file in the current
+    directory.
     '''
     # Get and distribute the HPC settings
-    settings = hpc_settings(host_name)
+    settings = hpc_settings()
+    manager = settings['manager']
     nodes = settings['nodes']
     cores_per_node = settings['cores_per_node']
     pw_executable = settings['qe_executable']
 
     # Use heuristics to trim down run conditions for small systems
-    if len(atoms) <= 5:
+    if _find_n_atoms() <= 5:
         nodes = 1
 
     # Call the HPC-specific command to actually run
-    if host_name == 'quartz':
+    if manager == 'slurm':
         _run_on_slurm(nodes, cores_per_node, pw_executable)
-    elif host_name == 'lassen':
+    elif manager == 'lsf':
         _run_on_lsf(nodes, cores_per_node, pw_executable)
     else:
-        raise RuntimeError('espresso_tools does not yet know what job manager '
-                           'that %s uses. Please modify '
-                           'espresso_tools.core.call_job_manager to specify.'
-                           % host_name)
+        raise RuntimeError('espresso_tools does not yet know how to submit '
+                           'jobs to the "%s" manager. Please modify '
+                           'espresso_tools.gaspy_wrappers.core.run_job '
+                           'to specify.' % manager)
+
+
+def _find_n_atoms():
+    '''
+    Reads the `pw.in` file and counts the number of atoms by counting the
+    number of lines between the 'ATOMIC_POSITIONS' line and the 'K_POINTS'
+    line. Yes, this is a big assumption, but we're also assuming that you'll be
+    using the espresso_tools framework, which usually creates input files like
+    this.
+    '''
+    counting = False
+    n_atoms = 0
+    with open('pw.in', 'r') as file_handle:
+        for line in file_handle.readlines():
+            # Stop counting if we reached the ending flag
+            if 'K_POINTS' in line:
+                break
+            if counting:
+                n_atoms += 1
+            # Start counting after we've reached the starting flag
+            if 'ATOMIC_POSITIONS' in line:
+                counting = True
+    return n_atoms
 
 
 def _run_on_slurm(nodes, cores_per_node, pw_executable):
@@ -138,8 +145,6 @@ def _run_on_lsf(nodes, cores_per_node, pw_executable):
                         want to use per node
         pw_executable   A string indicating the location of the Quantum
                         Espresso executable file you want to use
-    Arg:
-        atoms   `ase.Atoms` object that will be run
     '''
     command = ('jsrun --nrs=%i --cpu_per_rs=%i %s -in pw.in'
                % (nodes, cores_per_node, pw_executable))

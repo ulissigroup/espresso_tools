@@ -49,8 +49,6 @@ def create_vanilla_input_file(atom_hex, qe_settings, host_name):
                         `gaspy.defaults`
         host_name       A string indicating which host you're using. Helps us
                         decide where to look for the pseudopotentials.
-    Returns:
-        atoms   The `ase.Atoms` object that was decoded from the hex string.
     '''
     # Parse the atoms object
     atoms = decode_trajhex_to_atoms(atom_hex)
@@ -73,6 +71,3 @@ def create_vanilla_input_file(atom_hex, qe_settings, host_name):
                     sigma=qe_settings['sigma'],
                     deuterate=0)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])
-    calc.initialize(atoms)
-
-    return atoms
