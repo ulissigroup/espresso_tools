@@ -162,7 +162,7 @@ def _check_solvent_balance(anion_concs, cation_concs):
 
     # Add the charge contribution of each ion
     qbal = 0
-    for ion, conc in ion_concs:
+    for ion, conc in ion_concs.items():
         molchg = get_molchg(ion) * float(conc)
         qbal += molchg
 
