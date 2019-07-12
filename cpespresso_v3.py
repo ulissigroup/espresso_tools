@@ -1913,7 +1913,7 @@ class cpespresso(Calculator):
                 self.params_rism['cations'],
                 self.params_rism['anions']] if i]
         if sollist:
-            self.params_rism['nsolv'] = len(flatten(sollist))
+            self.params_rism['nsolv'] = len(list(flatten(sollist)))
 
 ##########################################################################
 
