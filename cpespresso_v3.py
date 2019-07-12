@@ -2866,15 +2866,13 @@ class cpespresso(Calculator):
 
                         if epsi and sigi:
                             LJtype = 'none'
-                            print('%s' % (i + 1, LJtype), file=f)
-                            print(
-                                '  solute_epsilon(%d) = %s !kcal/mol' %
-                                (i + 1, num2str(epsi)), file=f)
-                            print(
-                                '  solute_sigma(%d) = %s !angstrom' %
-                                (i + 1, num2str(sigi)), file=f)
+                            print("  solute_lj(%d) = '%s'," % (i + 1, LJtype), file=f)
+                            print('  solute_epsilon(%d) = %s !kcal/mol'
+                                  % (i + 1, num2str(epsi)), file=f)
+                            print('  solute_sigma(%d) = %s !angstrom'
+                                  % (i + 1, num2str(sigi)), file=f)
                         else:
-                            print('%s' % (i + 1, LJtype), file=f)
+                            print("  solute_lj(%d) = '%',s" % (i + 1, LJtype), file=f)
 
             print('/', file=f)
 
