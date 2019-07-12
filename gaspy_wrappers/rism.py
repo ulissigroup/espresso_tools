@@ -229,7 +229,7 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         print("SETTING ESM:   TRISM = FALSE ; BC='BC3'!")
 
     # Set the Fermi level, which is effectively the applied potential
-    target_fermi = rism_settings['set_fermi']
+    target_fermi = rism_settings['target_fermi']
     if target_fermi:
         calc.set(constmu=1,
                  fcp_mu=target_fermi,
