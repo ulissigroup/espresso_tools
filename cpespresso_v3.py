@@ -2850,7 +2850,7 @@ class cpespresso(Calculator):
                     'solute_sigmas',
                         'solute_lj']:
                     if key in d_input_types['rism']['str']:
-                        print('%s' % (key, val), file=f)
+                        print("  %s = '%s'," % (key, val), file=f)
                     else:
                         print('  %s = %s,' % (key, val), file=f)
 
