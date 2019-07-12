@@ -167,7 +167,7 @@ def _check_solvent_balance(anion_concs, cation_concs):
         qbal += molchg
 
     # If the charges do not sum to 0, then stop and yell at the user
-    if sum(qbal) != 0:
+    if qbal != 0:
         raise RuntimeError('The change balance is %.4f when it should be 0. '
                            'Please update the electrolytes to balance the '
                            'charge.' % qbal)
