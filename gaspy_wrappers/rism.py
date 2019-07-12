@@ -252,7 +252,10 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         print("SETTING LJ sigmas! %s" % (LJ_sigma))
 
     # If this is a solvent-phase molecule, then change everything up
-    molecule = rism_settings['molecule']
+    try:  # If the user does not specify, assume it's not a molecule
+        molecule = rism_settings['molecule']
+    except KeyError:
+        molecule = False
     if molecule:
         atoms.center()
         zcom = np.array([0, 0, atoms.get_center_of_mass()[-1]])
