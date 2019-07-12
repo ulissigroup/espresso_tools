@@ -1747,7 +1747,7 @@ class cpespresso(Calculator):
 #             defaults_rism['esm_bc'] = 'bc1'
 #             defaults_rism['tot_charge'] = 0.5 # set charge
 #             defaults_rism = self.defaults_pw
-            for key, val in self.defaults_pw.iteritems():
+            for key, val in self.defaults_pw.items():
                 self.defaults_rism[key] = val
             print("defaulting pwscf-rism calculator")
             self.defaults = self.defaults_rism
@@ -2823,7 +2823,7 @@ class cpespresso(Calculator):
             print("DOING FCP!!!!")
             print('&FCP', file=f)
 
-            for key, val in self.params_fcp.iteritems():
+            for key, val in self.params_fcp.items():
                 # print(" FCP %s" %(key))
                 if val is not None:
                     print("   setting FCP %s to %s " % (key, val))
