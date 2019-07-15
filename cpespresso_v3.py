@@ -20,14 +20,6 @@ from ase import constraints
 from .qe_units import rydberg, rydberg_over_bohr
 
 
-# If we're on Python 2...
-try:
-    from compiler.ast import flatten
-# or Python 3...
-except ImportError:
-    from .utils import flatten
-
-
 def formatfreqs(freqs):
     """ temporary function to format the Nose frequencies to match the correct atomic ordering
     not guaranteed that Nose freqs entered in a list will necessary match atom-ordering ASE decides on
@@ -1913,7 +1905,7 @@ class cpespresso(Calculator):
                 self.params_rism['cations'],
                 self.params_rism['anions']] if i]
         if sollist:
-            self.params_rism['nsolv'] = len(list(flatten(sollist)))
+            self.params_rism['nsolv'] = len(sollist)
 
 ##########################################################################
 
