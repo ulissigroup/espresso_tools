@@ -122,7 +122,7 @@ def _parse_atoms(atom_hex):
         atoms       The decoded `ase.Atoms` object, but also with a vacuum
                     buffer at the top of the unit cell.
     '''
-    atoms = decode_trajhex_to_atoms
+    atoms = decode_trajhex_to_atoms(atom_hex)
 
     # Calculate the height of the structure
     min_height = min(atom.position[2] for atom in atoms if atom.tag == 0)
