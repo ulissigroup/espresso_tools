@@ -61,7 +61,7 @@ def create_rism_input_file(atom_hex, rism_settings):
     '''
     # Parse various input parameters/settings into formats accepted by the
     # `rismespresso` class
-    atoms = decode_trajhex_to_atoms(atom_hex)
+    atoms = _parse_atoms(atom_hex)
     pspdir, setups = populate_pseudopotentials(rism_settings['psps'])
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
     laue_starting_right = _calculate_laue_starting_right(atoms)
@@ -107,6 +107,34 @@ def create_rism_input_file(atom_hex, rism_settings):
 
     # Create the input file
     calc.initialize(atoms)
+
+
+def _parse_atoms(atom_hex):
+    '''
+    This function will read the hex string and decode it to an `ase.Atoms`
+    object, and then it will add some vacuum space on top of the unit cell so
+    that the slab stays below the half-way point of the unit cell in the Z
+    direction. This is necessary to make sure that RISM works correctly.
+
+    Arg:
+        atom_hex    An `ase.Atoms` object encoded as a hex string.
+    Returns:
+        atoms       The decoded `ase.Atoms` object, but also with a vacuum
+                    buffer at the top of the unit cell.
+    '''
+    atoms = decode_trajhex_to_atoms
+
+    # Calculate the height of the structure
+    min_height = min(atom.position[2] for atom in atoms if atom.tag == 0)
+    max_height = max(atom.position[2] for atom in atoms if atom.tag == 0)
+    structure_height = max_height - min_height
+
+    # Add the structure's height to the top of the unit cell
+    unit_cell = atoms.get_cell()
+    unit_cell[2] += structure_height
+    atoms.set_cell(unit_cell)
+
+    return atoms
 
 
 def _parse_solvent(rism_settings, pspdir):
