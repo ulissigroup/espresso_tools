@@ -13,7 +13,7 @@ import numpy as np
 from .core import _run_qe, decode_trajhex_to_atoms
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
-from ..custom import hpc_settings
+from ..custom import hpc_settings, LJ_PARAMETERS
 from ..rismtools import (populate_solvent_specie,
                          populate_solvents,
                          get_molchg,
@@ -237,21 +237,58 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
                  freeze_all_atoms=rism_settings['freeze_all_atoms'])
         print("SETTING CONSTANT-MU CALCULATION AT E_FERMI = %s" % (target_fermi))
 
-    # Set the the LJ epsilon parameters
-    LJ_epsilon = rism_settings['LJ_epsilon']
-    if LJ_epsilon:
-        solute_epsilons = format_LJ(atoms, LJ_epsilon)
-        calc.set(solute_epsilons=solute_epsilons)
-        print("SETTING LJ epsilons! %s" % (LJ_epsilon))
+    # Call some helper functions to do fancier post-processing
+    __update_LJ_parameters(calc, atoms)
+    __update_molecular_parameters(calc, atoms, rism_settings)
 
-    # Set the the LJ sigma parameters
-    LJ_sigma = rism_settings['LJ_sigma']
-    if LJ_sigma:
-        solute_sigmas = format_LJ(atoms, LJ_sigma)
-        calc.set(solute_sigmas=solute_sigmas)
-        print("SETTING LJ sigmas! %s" % (LJ_sigma))
+    # Set the charge manually
+    charge = rism_settings['charge']
+    if charge:
+        calc.set(tot_charge=charge)
+        print("SETTING CHARGE %s" % (charge))
 
-    # If this is a solvent-phase molecule, then change everything up
+
+def __update_LJ_parameters(calc, atoms):
+    '''
+    This script will identify each of the species in the quantum section of the
+    cell and then assign their corresponding Lennard-Jones parameters from our
+    default settings.
+
+    Args:
+        calc            The instance of the
+                        `espresso_tools.cpespresso_v3.rismespresso` class that
+                        you're using
+        atoms           The `ase.Atoms` structure you're trying to relax
+    '''
+    # Set the epsilon values
+    LJ_epsilons = [LJ_PARAMETERS[atom.get_chemical_symbol()]['epsilon']
+                   for atom in atoms]
+    solute_epsilons = format_LJ(atoms, LJ_epsilons)
+    calc.set(solute_epsilons=solute_epsilons)
+    print("SETTING LJ epsilons! %s" % (LJ_epsilons))
+
+    # Set the sigma values
+    LJ_sigmas = [LJ_PARAMETERS[atom.get_chemical_symbol()]['sigma']
+                 for atom in atoms]
+    solute_sigmas = format_LJ(atoms, LJ_sigmas)
+    calc.set(solute_sigmas=solute_sigmas)
+    print("SETTING LJ sigmas! %s" % (LJ_sigmas))
+
+
+def __update_molecular_parameters(calc, atoms, rism_settings):
+    '''
+    If this is a solvent-phase molecule, then change everything up
+
+    Args:
+        calc            The instance of the
+                        `espresso_tools.cpespresso_v3.rismespresso` class that
+                        you're using
+        atoms           The `ase.Atoms` structure you're trying to relax
+        rism_settings   A dictionary that may have the key `molecule` with a
+                        Boolean value. If `True`, then this function will
+                        update the calculator settings. If `False` or not
+                        there, then it will do nothing.
+    '''
     try:  # If the user does not specify, assume it's not a molecule
         molecule = rism_settings['molecule']
     except KeyError:
@@ -262,6 +299,7 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         atoms.translate(-zcom)
         calc.set(atoms=atoms)
         print("DUAL BOUNDARY RISM")
+
         # Need to ensure that molecule is all oplsaa and no remnant LJ
         # parameters?
         calc.set(rism3d_conv_thr=1E-6,
@@ -271,9 +309,3 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
                  laue_reference='average',
                  isolated='esm',
                  esm_bc='bc1')
-
-    # Set the charge manually
-    charge = rism_settings['charge']
-    if charge:
-        calc.set(tot_charge=charge)
-        print("SETTING CHARGE %s" % (charge))

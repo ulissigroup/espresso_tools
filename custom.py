@@ -6,7 +6,16 @@ host that you're on.
 __authors__ = ['Joel Varley', 'Kevin Tran']
 __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
+import os
 import socket
+import json
+
+
+# Find and open the JSON of the Lennard-Jones parameters
+__MODULE_LOCATION = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+__PARAMETERS_LOCATION = os.path.join(__MODULE_LOCATION, 'lj_params.json')
+with open(__PARAMETERS_LOCATION, 'r') as file_handle:
+    LJ_PARAMETERS = json.load(file_handle)
 
 
 def hpc_settings():
