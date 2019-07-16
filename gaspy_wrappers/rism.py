@@ -210,7 +210,7 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
                             starting_charges
                             esm_only
                             target_fermi
-                            LJ_epsilo
+                            LJ_epsilon
                             LJ_sigma
                             molecule
                             charge
@@ -248,7 +248,7 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         print("SETTING CHARGE %s" % (charge))
 
 
-def __update_LJ_parameters(calc, atoms):
+def __update_LJ_parameters(calc, atoms, rism_settings):
     '''
     This script will identify each of the species in the quantum section of the
     cell and then assign their corresponding Lennard-Jones parameters from our
@@ -259,17 +259,27 @@ def __update_LJ_parameters(calc, atoms):
                         `espresso_tools.cpespresso_v3.rismespresso` class that
                         you're using
         atoms           The `ase.Atoms` structure you're trying to relax
+        rism_settings   A dictionary whose with the `LJ_epsilon` and `LJ_sigma`
+                        keys. If `None` then espresso_tools will use some
+                        defaults. Or you can give it a list with the same
+                        length as the number of atoms in the `atoms` object.
     '''
     # Set the epsilon values
-    LJ_epsilons = [LJ_PARAMETERS[atom.get_chemical_symbol()]['epsilon']
-                   for atom in atoms]
+    if rism_settings['LJ_epsilons'] is None:
+        LJ_epsilons = [LJ_PARAMETERS[atom.get_chemical_symbol()]['epsilon']
+                       for atom in atoms]
+    else:
+        LJ_epsilons = rism_settings['LJ_epsilons']
     solute_epsilons = format_LJ(atoms, LJ_epsilons)
     calc.set(solute_epsilons=solute_epsilons)
     print("SETTING LJ epsilons! %s" % (LJ_epsilons))
 
     # Set the sigma values
-    LJ_sigmas = [LJ_PARAMETERS[atom.get_chemical_symbol()]['sigma']
-                 for atom in atoms]
+    if rism_settings['LJ_epsilons'] is None:
+        LJ_sigmas = [LJ_PARAMETERS[atom.get_chemical_symbol()]['sigma']
+                     for atom in atoms]
+    else:
+        LJ_sigmas = rism_settings['LJ_sigmas']
     solute_sigmas = format_LJ(atoms, LJ_sigmas)
     calc.set(solute_sigmas=solute_sigmas)
     print("SETTING LJ sigmas! %s" % (LJ_sigmas))
