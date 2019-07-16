@@ -124,16 +124,12 @@ def _parse_atoms(atom_hex):
     '''
     atoms = decode_trajhex_to_atoms(atom_hex)
 
-    # Calculate the height of the structure
-    min_height = min(atom.position[2] for atom in atoms)
+    # Just make the cell twice the height of the highest atom, with an extra 1
+    # Angstrom buffer
     max_height = max(atom.position[2] for atom in atoms)
-    structure_height = max_height - min_height
-
-    # Add the structure's height to the top of the unit cell
     unit_cell = atoms.get_cell()
-    unit_cell[2] += structure_height + 1
+    unit_cell[2, 2] = 2*max_height + 1
     atoms.set_cell(unit_cell)
-
     return atoms
 
 
