@@ -41,8 +41,7 @@ def hpc_settings():
                     'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
                                       '/q-e-modified-pprism_beef/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
-                    #'nodes': 4,
-                    'nodes': 1,
+                    'nodes': 4,
                     'cores_per_node': 36,
                     'wall_time': 24}  # in hours
 
@@ -51,8 +50,7 @@ def hpc_settings():
                     'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
                                       '/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
-                    #'nodes': 4,
-                    'nodes': 1,
+                    'nodes': 4,
                     'cores_per_node': 44,
                     'wall_time': 12}  # in hours
 
