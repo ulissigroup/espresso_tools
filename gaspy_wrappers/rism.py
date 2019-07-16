@@ -131,7 +131,7 @@ def _parse_atoms(atom_hex):
 
     # Add the structure's height to the top of the unit cell
     unit_cell = atoms.get_cell()
-    unit_cell[2] += structure_height
+    unit_cell[2] += structure_height + 1
     atoms.set_cell(unit_cell)
 
     return atoms
