@@ -266,8 +266,7 @@ def __update_LJ_parameters(calc, atoms, rism_settings):
     '''
     # Set the epsilon values
     if rism_settings['LJ_epsilons'] is None:
-        LJ_epsilons = [LJ_PARAMETERS[atom.get_chemical_symbol()]['epsilon']
-                       for atom in atoms]
+        LJ_epsilons = [LJ_PARAMETERS[atom.symbol]['epsilon'] for atom in atoms]
     else:
         LJ_epsilons = rism_settings['LJ_epsilons']
     solute_epsilons = format_LJ(atoms, LJ_epsilons)
@@ -276,8 +275,7 @@ def __update_LJ_parameters(calc, atoms, rism_settings):
 
     # Set the sigma values
     if rism_settings['LJ_epsilons'] is None:
-        LJ_sigmas = [LJ_PARAMETERS[atom.get_chemical_symbol()]['sigma']
-                     for atom in atoms]
+        LJ_sigmas = [LJ_PARAMETERS[atom.symbol]['sigma'] for atom in atoms]
     else:
         LJ_sigmas = rism_settings['LJ_sigmas']
     solute_sigmas = format_LJ(atoms, LJ_sigmas)
