@@ -238,7 +238,7 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         print("SETTING CONSTANT-MU CALCULATION AT E_FERMI = %s" % (target_fermi))
 
     # Call some helper functions to do fancier post-processing
-    __update_LJ_parameters(calc, atoms)
+    __update_LJ_parameters(calc, atoms, rism_settings)
     __update_molecular_parameters(calc, atoms, rism_settings)
 
     # Set the charge manually
