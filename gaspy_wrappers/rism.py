@@ -316,4 +316,5 @@ def __update_molecular_parameters(calc, atoms, rism_settings):
                  laue_starting_left=0,
                  laue_reference='average',
                  isolated='esm',
-                 esm_bc='bc1')
+                 esm_bc='bc1',
+                 constmu=None)
