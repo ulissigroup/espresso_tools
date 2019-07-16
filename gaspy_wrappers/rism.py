@@ -310,8 +310,7 @@ def __update_molecular_parameters(calc, atoms, rism_settings):
 
         # Need to ensure that molecule is all oplsaa and no remnant LJ
         # parameters?
-        calc.set(lfcp=False,
-                 rism3d_conv_thr=1E-6,
+        calc.set(rism3d_conv_thr=1E-6,
                  laue_starting_right=0,
                  laue_expand_left=90,
                  laue_starting_left=0,
