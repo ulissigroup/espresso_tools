@@ -125,8 +125,8 @@ def _parse_atoms(atom_hex):
     atoms = decode_trajhex_to_atoms(atom_hex)
 
     # Calculate the height of the structure
-    min_height = min(atom.position[2] for atom in atoms if atom.tag == 0)
-    max_height = max(atom.position[2] for atom in atoms if atom.tag == 0)
+    min_height = min(atom.position[2] for atom in atoms)
+    max_height = max(atom.position[2] for atom in atoms)
     structure_height = max_height - min_height
 
     # Add the structure's height to the top of the unit cell
