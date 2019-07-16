@@ -64,7 +64,7 @@ def create_rism_input_file(atom_hex, rism_settings):
     atoms = decode_trajhex_to_atoms(atom_hex)
     pspdir, setups = populate_pseudopotentials(rism_settings['psps'])
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
-    laue_starting_right, laue_buffer_right = _calculate_laue_parameters(atoms)
+    laue_starting_right = _calculate_laue_starting_right(atoms)
 
     # Set the run-time to 2 minutes less than the job manager's wall time
     settings = hpc_settings()
@@ -86,7 +86,6 @@ def create_rism_input_file(atom_hex, rism_settings):
                         cations=cations,
                         anions=anions,
                         laue_starting_right=laue_starting_right,
-                        laue_buffer_right=laue_buffer_right,
                         conv_thr=rism_settings['conv_elec'],
                         laue_expand_right=rism_settings['laue_expand_right'],
                         rism3d_conv_level=rism_settings['rism_convlevel'],
@@ -174,14 +173,12 @@ def _check_solvent_balance(anion_concs, cation_concs):
                            'charge.' % qbal)
 
 
-def _calculate_laue_parameters(atoms):
+def _calculate_laue_starting_right(atoms):
     '''
     This function will calculate the location you should use for
-    "laue_starting_right" and "laue_buffer_right". In other words:  it tells you
-    where to start the mean-field section in the z-axis, and it also tells you
-    how far to buffer the field, respectively. Here, we set the starting
-    location equal to 1 Angstrom below the upper-most slab atom, and we buffer
-    by the thickness of the structure.
+    "laue_starting_right". In other words, it tells you where to start the
+    mean-field section in the z-axis. Here, we set it equal to 1 Angstrom below
+    the upper-most slab atom.
 
     Note that we assume that the atoms objects are coming from GASpy, which
     sets the tags of slab atoms to `0` and adsorbate atoms to `> 0`.
@@ -189,17 +186,12 @@ def _calculate_laue_parameters(atoms):
     Arg:
         atoms   The `ase.Atoms` object you're trying to relax
     Returns:
-        starting_height A float indicating the location in the z-direction
-                        at which to start the laue region (Angstroms).
-        buffer_         A float indicating how much Laue buffer to add to the
-                        right/top (Angstroms)
+        starting_height     A float indicating the location in the z-direction
+                            at which to start the laue region (Angstroms).
     '''
-    min_height = min(atom.position[2] for atom in atoms if atom.tag == 0)
     max_height = max(atom.position[2] for atom in atoms if atom.tag == 0)
     starting_height = max_height - 1.
-    thickness = max_height - min_height
-    buffer_ = thickness
-    return starting_height, buffer_
+    return starting_height
 
 
 def _post_process_rismespresso(calc, atoms, rism_settings):
