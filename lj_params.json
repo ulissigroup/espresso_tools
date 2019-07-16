@@ -306,5 +306,15 @@
         "epsilon": 0.069,
         "origin": "OPLS2005",
         "sigma": 2.782
+    },
+    "C": {
+        "epsilon": 0.07,
+        "origin": "RISM-OPLS",
+        "sigma": 3.55
+    },
+    "O": {
+        "epsilon": 0.17,
+        "origin": "RISM-OPLS",
+        "sigma": 3.0
     }
 }
