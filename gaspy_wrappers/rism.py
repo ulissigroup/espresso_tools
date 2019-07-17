@@ -112,8 +112,8 @@ def create_rism_input_file(atom_hex, rism_settings):
 def _parse_atoms(atom_hex):
     '''
     This function will read the hex string and decode it to an `ase.Atoms`
-    object, and then it center the atoms at the bottom of the unit cell. This
-    is necessary to make sure that RISM works correctly; the quantum atoms must
+    object, and then it will move the slab downwards in the cell. This is
+    necessary to make sure that RISM works correctly; the quantum atoms must
     remain below the half-way point in the z-direction.
 
     Arg:
@@ -124,8 +124,13 @@ def _parse_atoms(atom_hex):
     '''
     atoms = decode_trajhex_to_atoms(atom_hex)
 
-    center_of_mass_height = atoms.get_center_of_mass()[2]
-    atoms.translate((0, 0, -center_of_mass_height))
+    # Move the structure down by its thickness. We assume that the structure is
+    # centered at the mid-way point, and so moving it down by its thickness
+    # guarantees that the entire slab will be below the mid-way point.
+    min_height = min(atom.position[2] for atom in atoms)
+    max_height = max(atom.position[2] for atom in atoms)
+    structure_height = max_height - min_height
+    atoms.translate((0, 0, -structure_height))
     return atoms
 
 
