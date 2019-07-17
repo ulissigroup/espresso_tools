@@ -30,7 +30,7 @@ def get_pseudopotential_path():
     return path
 
 
-def populate_pseudopotentials(database, xcf='PBE'):
+def populate_pseudopotentials(database, xcf='rpbe'):
     """ Standardize how to define setups and where they are located.
 
     :param database: Choose 'SSSP_acc', 'SSSP_eff', 'GBRV', 'brandon', 'manual', or 'JACAPO'
@@ -42,19 +42,36 @@ def populate_pseudopotentials(database, xcf='PBE'):
 
     keylist = ['SSSP_acc', 'SSSP_eff', 'GBRV', 'brandon', 'manual', 'JACAPO']
 
-    d_psp = {'PBE': {
-        'GBRV': {'pspdir': 'GBRV_PBE_UPF_v1.5', 'setups': setups_PBE_USP_GBRV},
-        'SSSP_acc': {'pspdir': 'SSSP_acc_PBE', 'setups': setups_PBE_SSSP_acc},
-        'SSSP_eff': {'pspdir': 'SSSP_eff_PBE', 'setups': setups_PBE_SSSP_eff},
-        'brandon': {'pspdir': 'user_defined', 'setups': setups_brandon},
-        'manual': {'pspdir': 'PSP', 'setups': setups_USP_manual, },
-        'JACAPO': {'pspdir': 'newultrasofts', 'setups': setups_jacapo},
-    }, 'PBEsol': {
-        'GBRV': {'pspdir': 'GBRV_PBESOL_UPF_v1.5', 'setups': setups_PBESOL_USP_GBRV},
-        'SSSP_acc': {'pspdir': 'SSSP_acc_PBESOL', 'setups': setups_PBESOL_SSSP_acc},
-        'SSSP_eff': {'pspdir': 'SSSP_eff_PBESOL', 'setups': setups_PBESOL_SSSP_eff},
-    }
-    }
+    d_psp = {'PBE': {'GBRV': {'pspdir': 'GBRV_PBE_UPF_v1.5',
+                              'setups': setups_PBE_USP_GBRV},
+                     'SSSP_acc': {'pspdir': 'SSSP_acc_PBE',
+                                  'setups': setups_PBE_SSSP_acc},
+                     'SSSP_eff': {'pspdir': 'SSSP_eff_PBE',
+                                  'setups': setups_PBE_SSSP_eff},
+                     'brandon': {'pspdir': 'user_defined',
+                                 'setups': setups_brandon},
+                     'manual': {'pspdir': 'PSP',
+                                'setups': setups_USP_manual, },
+                     'JACAPO': {'pspdir': 'newultrasofts',
+                                'setups': setups_jacapo}},
+             'PBEsol': {'GBRV': {'pspdir': 'GBRV_PBESOL_UPF_v1.5',
+                                 'setups': setups_PBESOL_USP_GBRV},
+                        'SSSP_acc': {'pspdir': 'SSSP_acc_PBESOL',
+                                     'setups': setups_PBESOL_SSSP_acc},
+                        'SSSP_eff': {'pspdir': 'SSSP_eff_PBESOL',
+                                     'setups': setups_PBESOL_SSSP_eff}},
+             'rpbe': {'GBRV': {'pspdir': 'GBRV_PBE_UPF_v1.5',
+                               'setups': setups_PBE_USP_GBRV},
+                      'SSSP_acc': {'pspdir': 'SSSP_acc_PBE',
+                                   'setups': setups_PBE_SSSP_acc},
+                      'SSSP_eff': {'pspdir': 'SSSP_eff_PBE',
+                                   'setups': setups_PBE_SSSP_eff},
+                      'brandon': {'pspdir': 'user_defined',
+                                  'setups': setups_brandon},
+                      'manual': {'pspdir': 'PSP',
+                                 'setups': setups_USP_manual, },
+                      'JACAPO': {'pspdir': 'newultrasofts',
+                                 'setups': setups_jacapo}}}
 
     pspdir = None
     setups = None
