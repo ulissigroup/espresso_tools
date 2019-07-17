@@ -130,7 +130,7 @@ def _parse_atoms(atom_hex):
     min_height = min(atom.position[2] for atom in atoms)
     max_height = max(atom.position[2] for atom in atoms)
     structure_height = max_height - min_height
-    atoms.traslate((0, 0, -structure_height))
+    atoms.translate((0, 0, -structure_height))
     return atoms
 
 
