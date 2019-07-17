@@ -62,7 +62,7 @@ def create_rism_input_file(atom_hex, rism_settings):
     # Parse various input parameters/settings into formats accepted by the
     # `rismespresso` class
     atoms = _parse_atoms(atom_hex)
-    pspdir, setups = populate_pseudopotentials(rism_settings['psps'])
+    pspdir, setups = populate_pseudopotentials(rism_settings['psps'], rism_settings['xcf'])
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
     laue_starting_right = _calculate_laue_starting_right(atoms)
 

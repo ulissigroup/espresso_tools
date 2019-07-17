@@ -53,7 +53,7 @@ def create_vanilla_input_file(atom_hex, qe_settings):
     atoms = decode_trajhex_to_atoms(atom_hex)
 
     # Parse the pseudopotentials
-    pspdir, setups = populate_pseudopotentials(qe_settings['psps'])
+    pspdir, setups = populate_pseudopotentials(qe_settings['psps'], qe_settings['xcf'])
 
     # Set the run-time to 2 minutes less than the job manager's wall time
     settings = hpc_settings()
