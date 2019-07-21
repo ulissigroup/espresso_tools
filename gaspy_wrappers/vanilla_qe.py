@@ -6,6 +6,7 @@ CMU's GASpy. Requires Python 3
 __authors__ = ['Joel Varley', 'Kevin Tran']
 __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
+import json
 from .core import _run_qe, decode_trajhex_to_atoms
 from ..cpespresso_v3 import espresso
 from ..pseudopotentials import populate_pseudopotentials
@@ -54,11 +55,16 @@ def create_vanilla_input_file(atom_hex, qe_settings):
     atoms = decode_trajhex_to_atoms(atom_hex)
     pspdir, setups = populate_pseudopotentials(qe_settings['psps'], qe_settings['xcf'])
     calcmode = qe_settings.get('calcmode', 'relax')
+    # Get the FireWorks ID, which will be used as the QE prefix
+    with open('FW.json', 'r') as file_handle:
+        fw_info = json.load(file_handle)
+    prefix = fw_info['fw_id']
 
     # Set the run-time to 2 minutes less than the job manager's wall time
     settings = hpc_settings()
     wall_time = settings['wall_time']
     max_seconds = wall_time * 60 * 60 - 120
+    outdir = settings['scratch_dir']
 
     # Use espressotools to do the heavy lifting
     calc = espresso(calcmode=calcmode,
@@ -74,6 +80,8 @@ def create_vanilla_input_file(atom_hex, qe_settings):
                     # non-zero for gaussian smearing
                     sigma=qe_settings['sigma'],
                     deuterate=0,
-                    max_seconds=max_seconds)
+                    max_seconds=max_seconds,
+                    outdir=outdir,
+                    prefix=prefix)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])
     calc.initialize(atoms)

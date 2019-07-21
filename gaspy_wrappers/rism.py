@@ -9,6 +9,7 @@ https://journals.aps.org/prb/pdf/10.1103/PhysRevB.96.115429
 __authors__ = ['Joel Varley', 'Kevin Tran']
 __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
+import json
 import numpy as np
 from .core import _run_qe, decode_trajhex_to_atoms
 from ..cpespresso_v3 import rismespresso
@@ -66,11 +67,16 @@ def create_rism_input_file(atom_hex, rism_settings):
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
     laue_starting_right = _calculate_laue_starting_right(atoms)
     calcmode = rism_settings.get('calcmode', 'relax')
+    # Get the FireWorks ID, which will be used as the QE prefix
+    with open('FW.json', 'r') as file_handle:
+        fw_info = json.load(file_handle)
+    prefix = fw_info['fw_id']
 
     # Set the run-time to 2 minutes less than the job manager's wall time
     settings = hpc_settings()
     wall_time = settings['wall_time']
     max_seconds = wall_time * 60 * 60 - 120
+    outdir = settings['scratch_dir']
 
     # Use rismespresso to do the heavy lifting
     calc = rismespresso(calcmode=calcmode,
@@ -102,7 +108,9 @@ def create_rism_input_file(atom_hex, rism_settings):
                         mdiis3d_size=15,
                         mdiis3d_step=0.7,
                         mdiis1d_size=20,
-                        mdiis1d_step=0.1)
+                        mdiis1d_step=0.1,
+                        outdir=outdir,
+                        prefix=prefix)
     calc.set(atoms=atoms)
     _post_process_rismespresso(calc, atoms, rism_settings)
 

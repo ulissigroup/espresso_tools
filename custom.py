@@ -8,6 +8,7 @@ __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
 import os
 import socket
+import getpass
 import json
 
 
@@ -41,6 +42,7 @@ def hpc_settings():
                     'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
                                       '/q-e-modified-pprism_beef/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
+                    'scratch_dir': '/p/lscratchh/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 36,
                     'wall_time': 20}  # in hours
@@ -50,6 +52,7 @@ def hpc_settings():
                     'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
                                       '/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
+                    'scratch_dir': '/p/lscratchh/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 44,
                     'wall_time': 12}  # in hours
@@ -59,5 +62,11 @@ def hpc_settings():
                          'add the appropriate HPC settings into '
                          'espresso_tools.custom.hpc_settings.'
                          % node_name)
+
+    # Make the scratch directory if it doesn't already exist
+    try:
+        os.mkdir(settings['scratch_dir'])
+    except FileExistsError:
+        pass
 
     return settings
