@@ -43,7 +43,7 @@ def hpc_settings():
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'nodes': 4,
                     'cores_per_node': 36,
-                    'wall_time': 24}  # in hours
+                    'wall_time': 20}  # in hours
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
