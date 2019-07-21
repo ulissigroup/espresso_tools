@@ -65,6 +65,7 @@ def create_rism_input_file(atom_hex, rism_settings):
     pspdir, setups = populate_pseudopotentials(rism_settings['psps'], rism_settings['xcf'])
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
     laue_starting_right = _calculate_laue_starting_right(atoms)
+    calcmode = rism_settings.get('calcmode', 'relax')
 
     # Set the run-time to 2 minutes less than the job manager's wall time
     settings = hpc_settings()
@@ -72,7 +73,7 @@ def create_rism_input_file(atom_hex, rism_settings):
     max_seconds = wall_time * 60 * 60 - 120
 
     # Use rismespresso to do the heavy lifting
-    calc = rismespresso(calcmode='relax',
+    calc = rismespresso(calcmode=calcmode,
                         xc=rism_settings['xcf'],
                         pw=rism_settings['encut'],
                         kpts=rism_settings['kpts'],

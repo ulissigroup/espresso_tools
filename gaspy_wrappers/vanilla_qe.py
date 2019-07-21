@@ -49,11 +49,11 @@ def create_vanilla_input_file(atom_hex, qe_settings):
                         You may find a good set of defaults somewhere in in
                         `gaspy.defaults`
     '''
-    # Parse the atoms object
+    # Parse various input parameters/settings into formats accepted by the
+    # `espresso` class
     atoms = decode_trajhex_to_atoms(atom_hex)
-
-    # Parse the pseudopotentials
     pspdir, setups = populate_pseudopotentials(qe_settings['psps'], qe_settings['xcf'])
+    calcmode = qe_settings.get('calcmode', 'relax')
 
     # Set the run-time to 2 minutes less than the job manager's wall time
     settings = hpc_settings()
@@ -61,7 +61,7 @@ def create_vanilla_input_file(atom_hex, qe_settings):
     max_seconds = wall_time * 60 * 60 - 120
 
     # Use espressotools to do the heavy lifting
-    calc = espresso(calcmode='relax',
+    calc = espresso(calcmode=calcmode,
                     xc=qe_settings['xcf'],
                     # [pw] eV, wave function cutoff, chg density cutoff 'dw'
                     # defaults to 10*pw
