@@ -68,6 +68,7 @@ def create_vanilla_input_file(atom_hex, qe_settings):
 
     # Use espressotools to do the heavy lifting
     calc = espresso(calcmode=calcmode,
+                    printforces=True,
                     xc=qe_settings['xcf'],
                     # [pw] eV, wave function cutoff, chg density cutoff 'dw'
                     # defaults to 10*pw

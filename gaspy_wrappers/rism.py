@@ -80,6 +80,7 @@ def create_rism_input_file(atom_hex, rism_settings):
 
     # Use rismespresso to do the heavy lifting
     calc = rismespresso(calcmode=calcmode,
+                        printforces=True,
                         xc=rism_settings['xcf'],
                         pw=rism_settings['encut'],
                         kpts=rism_settings['kpts'],
@@ -97,7 +98,6 @@ def create_rism_input_file(atom_hex, rism_settings):
                         laue_expand_right=rism_settings['laue_expand_right'],
                         rism3d_conv_level=rism_settings['rism_convlevel'],
                         rism3d_conv_thr=rism_settings['conv_rism3d'],
-                        printforces=1,
                         nosym=1,
                         nstep=200,
                         electron_maxstep=1000,
