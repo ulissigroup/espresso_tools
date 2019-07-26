@@ -334,6 +334,8 @@ def __update_molecular_parameters(calc, atoms, rism_settings):
         molecule = rism_settings['molecule']
     except KeyError:
         molecule = False
+
+    # Center the molecule
     if molecule:
         atoms.center()
         zcom = np.array([0, 0, atoms.get_center_of_mass()[-1]])

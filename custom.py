@@ -52,7 +52,7 @@ def hpc_settings():
                     'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
                                       '/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
-                    'scratch_dir': '/p/lscratchh/%s/gaspy/' % getpass.getuser(),
+                    'scratch_dir': '/p/gpfs1/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 44,
                     'wall_time': 12}  # in hours
