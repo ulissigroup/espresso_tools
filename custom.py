@@ -43,7 +43,7 @@ def hpc_settings():
                                       '/q-e-modified-pprism_beef/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'scratch_dir': '/p/lscratchh/%s/gaspy/' % getpass.getuser(),
-                    'nodes': 1,
+                    'nodes': 4,
                     'cores_per_node': 36,
                     'wall_time': 20}  # in hours
 
