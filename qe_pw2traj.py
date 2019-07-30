@@ -163,7 +163,10 @@ def extract_coordinates(qe_output_name):
 
     # scale vectors and units appropriately
     latscale = unitscale * pscale
-    cellscale = unitscale * lvscale
+    if 'angstrom' in scell[0][1]:
+        cellscale = 1.
+    else:
+        cellscale = unitscale * lvscale
 
     # split positions and cell into each step
     nsteps = len(poslineno) - 1
