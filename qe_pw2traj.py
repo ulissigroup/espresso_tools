@@ -54,6 +54,7 @@ def read_positions_qe(qe_output_name, output_traj_name, index=-1):
     steps = extract_coordinates(qe_output_name)
     energies = get_total_energies(qe_output_name)
     nsteps = max(steps.keys()) + 1
+    forces = get_forces(qe_output_name)
 
     images = []
     for istep in range(nsteps):
@@ -68,7 +69,7 @@ def read_positions_qe(qe_output_name, output_traj_name, index=-1):
         calc = SinglePointCalculator(
             atoms=atoms,
             energy=energies[istep],
-            forces=None,
+            forces=forces[istep],
             stress=None,
             magmoms=None)
         atoms.set_calculator(calc)
@@ -253,3 +254,61 @@ def get_total_energies(filename):
         print("Identified a pw.x output file")
         energies = np.array([float(i[-2]) * rydberg for i in pwe])
     return energies
+
+
+def get_forces(filename):
+    '''
+    Get the final atomic forces out of the output file.
+
+    Arg:
+        filename    A string indicating the name of the output file
+    Returns:
+        forces  A `SxNx3` numpy array, where S is the number of steps, N is the
+                number of atoms, and each element corresponds to the force on
+                atom `n` at step `s`.
+    '''
+    # Initialize
+    n_images = get_number_of_images(filename)
+    n_atoms = get_number_of_atoms(filename)
+    forces = np.empty((n_images, n_atoms, 3))
+
+    # Read the forces line-by-line and then store them in the output array
+    all_forces = os.popen('grep \'  force\' %s' % filename)
+    for step_num in range(n_images):
+        for atom_num in range(n_atoms):
+            grepped_line = all_forces.readline()
+            atomic_forces = grepped_line.split()[-3:]
+            atomic_forces = [float(force) for force in atomic_forces]
+            forces[step_num, atom_num] = atomic_forces
+    return forces
+
+
+def get_number_of_images(filename):
+    '''
+    Get the number of steps that the relaxation took, assuming that it uses
+    BFGS.
+
+    Arg:
+        filename    A string indicating the name of the output file
+    Returns:
+        n_images    An integer for the total number of images, including the
+                    initial
+    '''
+    step_counter = os.popen('grep \'bfgs steps\' %s' % filename)
+    steps = [int(line.split()[-1]) for line in step_counter]
+    n_images = max(steps) + 1
+    return n_images
+
+
+def get_number_of_atoms(filename):
+    '''
+    Get the number of atoms reported in the output file.
+
+    Arg:
+        filename    A string indicating the name of the output file
+    Returns:
+        n_steps     An integer for the total number of atoms
+    '''
+    n_atoms_line = os.popen('grep \'number of atoms\' %s' % filename).readline()
+    n_atoms = int(n_atoms_line.split()[-1])
+    return n_atoms
