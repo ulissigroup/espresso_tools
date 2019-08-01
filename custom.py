@@ -49,15 +49,11 @@ def hpc_settings():
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
-                    #'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
-                    #                  '/Lassen/q-e-modified-pprism_beef/bin/pw.x'),
                     'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
                                       '/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x'),
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'scratch_dir': '/p/gpfs1/%s/gaspy/' % getpass.getuser(),
-                    #'nodes': 4,
-                    'nodes': 1,
-                    #'cores_per_node': 40,
+                    'nodes': 4,
                     'cores_per_node': 40,
                     'wall_time': 12}  # in hours
 
