@@ -146,6 +146,8 @@ def _run_on_lsf(nodes, cores_per_node, pw_executable):
         pw_executable   A string indicating the location of the Quantum
                         Espresso executable file you want to use
     '''
-    command = ('jsrun --nrs=%i --cpu_per_rs=%i %s -in pw.in'
-               % (nodes, cores_per_node, pw_executable))
+    n_threads = nodes * cores_per_node * 2  # Assumes 2 threads per core
+    command = 'lrun -n%i %s -in pw.in' % (n_threads, pw_executable)
+    #command = ('jsrun --nrs=%i --cpu_per_rs=%i %s -in pw.in'
+    #           % (nodes, cores_per_node, pw_executable))
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
