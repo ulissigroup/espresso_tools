@@ -96,6 +96,7 @@ def create_rism_input_file(atom_hex, rism_settings):
                         laue_starting_right=laue_starting_right,
                         conv_thr=rism_settings['conv_elec'],
                         laue_expand_right=rism_settings['laue_expand_right'],
+                        mdiis1d_step=rism_settings['mdiis1d_step'],
                         rism1d_conv_thr=rism_settings['rism1d_conv_thr'],
                         rism3d_conv_thr=rism_settings['rism3d_conv_thr'],
                         rism3d_conv_level=rism_settings['rism3d_conv_level'],
