@@ -110,7 +110,6 @@ def create_rism_input_file(atom_hex, rism_settings):
                         rism1d_maxstep=12000,
                         mdiis3d_size=15,
                         mdiis1d_size=20,
-                        mdiis1d_step=0.1,
                         outdir=outdir,
                         prefix=prefix)
     calc.set(atoms=atoms)
