@@ -107,7 +107,7 @@ def create_rism_input_file(atom_hex, rism_settings):
                         mixing_mode='local-TF',
                         laue_reference='right',
                         rism3d_maxstep=25000,
-                        rism1d_maxstep=12000,
+                        rism1d_maxstep=1e5,
                         mdiis3d_size=15,
                         mdiis1d_size=20,
                         outdir=outdir,
