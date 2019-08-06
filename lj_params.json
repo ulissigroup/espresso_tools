@@ -65,9 +65,9 @@
     },
     "Cu": {
         "description": "",
-        "epsilon": 0.005,
+        "epsilon": 1.0,
         "origin": "OPLS2005",
-        "sigma": 3.112
+        "sigma": 3.0
     },
     "Fe": {
         "description": "",
