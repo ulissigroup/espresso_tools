@@ -145,16 +145,17 @@ def extract_coordinates(qe_output_name):
         pscale = 1.
         print("angstrom/bohr coordinates")
 
-    # extract cell lattice vectors : FIX!
+    # extract cell lattice vectors
     cellcoord = os.popen(cellcmd)
     cellraw = [i for i in cellcoord.readlines()]
-    if cellraw:  # works for CP MD or variable-cell PWSCF/CP
+    # works for CP MD or variable-cell PWSCF/CP (e.g., bulk relaxations)
+    if cellraw:
         celllineno = [i for i, val in enumerate(cellraw) if 'CELL' in val]
         scell = [i.split() for i in cellraw]
-    else:   # PWSCF  non variable-cell
+    # PWSCF non variable-cell (e.g., everything else)
+    else:
         cellcoord = os.popen('sed -n \'/a(1)/,/a(3)/p \' %s' % (qe_output_name))
         cellraw = [i for i in cellcoord.readlines()]
-        print("NEED TO FIX PWSCF CELL READER? KEEPING LAST 3 CELL VECTORS")
         cellraw = cellraw[-3:]
         nsw = len(poslineno)
         celllineno = [i * 4 for i in range(nsw)]
@@ -164,9 +165,14 @@ def extract_coordinates(qe_output_name):
 
     # scale vectors and units appropriately
     latscale = unitscale * pscale
-    if 'angstrom' in scell[0][1]:
-        cellscale = 1.
-    else:
+    # Usually works with variable cell sizes
+    try:
+        if 'angstrom' in scell[0][1]:
+            cellscale = 1.
+        else:
+            cellscale = unitscale * lvscale
+    # Usually works with static cell sizes
+    except IndexError:
         cellscale = unitscale * lvscale
 
     # split positions and cell into each step
@@ -249,7 +255,7 @@ def get_total_energies(filename):
     pwraw = os.popen('grep \'! \' %s ' % (filename))
     pwe = [i.split() for i in pwraw.readlines()]
     # purge out lines about whether symmetry disabled
-    pwe = [i for i in pwe if 'symmetry' not in i]
+    pwe = [line for line in pwe if 'total' in line and 'energy' in line]
     if pwe:
         print("Identified a pw.x output file")
         energies = np.array([float(i[-2]) * rydberg for i in pwe])
@@ -273,7 +279,7 @@ def get_forces(filename):
     forces = np.empty((n_images, n_atoms, 3))
 
     # Read the forces line-by-line and then store them in the output array
-    all_forces = os.popen('grep \'  force\' %s' % filename)
+    all_forces = os.popen('grep \'  force =\' %s' % filename)
     for step_num in range(n_images):
         for atom_num in range(n_atoms):
             grepped_line = all_forces.readline()
@@ -294,7 +300,7 @@ def get_number_of_images(filename):
         n_images    An integer for the total number of images, including the
                     initial
     '''
-    step_counter = os.popen('grep \'bfgs steps\' %s' % filename)
+    step_counter = os.popen('grep \'number of scf cycles\' %s' % filename)
     steps = [int(line.split()[-1]) for line in step_counter]
     n_images = max(steps) + 1
     return n_images
