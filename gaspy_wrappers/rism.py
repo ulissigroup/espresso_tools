@@ -31,7 +31,7 @@ def run_rism(atom_hex, rism_settings):
 
     Args:
         atom_hex        An `ase.Atoms` object encoded as a hex string.
-        rism_settings     A dictionary containing various Quantum Espresso settings.
+        rism_settings   A dictionary containing various Quantum Espresso settings.
                         You may find a good set of defaults somewhere in in
                         `gaspy.defaults`
     Returns:
