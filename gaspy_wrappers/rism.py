@@ -262,24 +262,31 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         calc.set(esm_bc='bc3')
         print("SETTING ESM:   TRISM = FALSE ; BC='BC3'!")
 
-    # Set the Fermi level, which is effectively the applied potential
-    target_fermi = rism_settings['target_fermi']
-    if target_fermi:
+    # Set the Fermi level, which is effectively the applied potential. If not
+    # specified, then do a constant-charge calculation (instead of constant
+    # fermi)
+    try:
+        target_fermi = rism_settings['target_fermi']
         calc.set(constmu=1,
                  fcp_mu=target_fermi,
                  fcp_conv_thr=rism_settings['fcp_conv_thr'],
                  freeze_all_atoms=rism_settings['freeze_all_atoms'])
         print("SETTING CONSTANT-MU CALCULATION AT E_FERMI = %s" % (target_fermi))
+    except KeyError:
+        pass
 
     # Call some helper functions to do fancier post-processing
     __update_LJ_parameters(calc, atoms, rism_settings)
     __update_molecular_parameters(calc, atoms, rism_settings)
 
-    # Set the charge manually
-    charge = rism_settings['charge']
-    if charge:
-        calc.set(tot_charge=charge)
-        print("SETTING CHARGE %s" % (charge))
+    # Set the charge manually. If not specified, then default to 0
+    try:
+        charge = rism_settings['charge']
+    except KeyError:
+        charge = 0.
+    calc.set(tot_charge=charge)
+    print("SETTING CHARGE %s" % (charge))
+
 
 
 def __update_LJ_parameters(calc, atoms, rism_settings):
