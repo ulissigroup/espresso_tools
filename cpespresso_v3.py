@@ -1899,11 +1899,8 @@ class cpespresso(Calculator):
             self.params_ion['nhpcl'] = min([len(self.params_ion['nhfreq']), 4])
 
         # make RISM nsolv compatible with solvent inputs
-        sollist = [
-            i for i in [
-                self.params_rism['solvents'],
-                self.params_rism['cations'],
-                self.params_rism['anions']] if i]
+        sollist = [specie for key in ['solvents', 'cations', 'anions']
+                   for specie in self.params_rism[key]]
         if sollist:
             self.params_rism['nsolv'] = len(sollist)
 
