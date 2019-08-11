@@ -118,34 +118,40 @@ def _find_n_atoms():
     return n_atoms
 
 
-def _run_on_slurm(nodes, cores_per_node, pw_executable):
+def _run_on_slurm(nodes, cores_per_node, threads_per_core, pw_executable):
     '''
     Calls Quantum Espresso on Quartz
 
     Args:
-        nodes           An integer indicating how many nodes you want to run on
-        cores_per_node  An integer indicating the total number of cores you
-                        want to use per node
-        pw_executable   A string indicating the location of the Quantum
-                        Espresso executable file you want to use
+        nodes               An integer indicating how many nodes you want to
+                            run on
+        cores_per_node      An integer indicating the total number of cores you
+                            want to use per node
+        threads_per_core    An integer indicating the total number of threads
+                            you want to use per core
+        pw_executable       A string indicating the location of the Quantum
+                            Espresso executable file you want to use
     '''
-    n_tasks = nodes * cores_per_node
+    n_tasks = nodes * cores_per_node * threads_per_core
     command = ('srun --nodes=%i --ntasks=%i %s -in pw.in'
                % (nodes, n_tasks, pw_executable))
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
 
 
-def _run_on_lsf(nodes, cores_per_node, pw_executable):
+def _run_on_lsf(nodes, cores_per_node, threads_per_core, pw_executable):
     '''
     Calls Quantum Espresso on Lassen
 
     Args:
-        nodes           An integer indicating how many nodes you want to run on
-        cores_per_node  An integer indicating the total number of cores you
-                        want to use per node
-        pw_executable   A string indicating the location of the Quantum
-                        Espresso executable file you want to use
+        nodes               An integer indicating how many nodes you want to
+                            run on
+        cores_per_node      An integer indicating the total number of cores you
+                            want to use per node
+        threads_per_core    An integer indicating the total number of threads
+                            you want to use per core
+        pw_executable       A string indicating the location of the Quantum
+                            Espresso executable file you want to use
     '''
-    n_threads = nodes * cores_per_node * 2  # Assumes 2 threads per core
-    command = 'lrun -n%i %s -in pw.in' % (n_threads, pw_executable)
+    n_tasks = nodes * cores_per_node * threads_per_core
+    command = 'lrun -n%i %s -in pw.in' % (n_tasks, pw_executable)
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
