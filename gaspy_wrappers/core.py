@@ -77,6 +77,7 @@ def run_job():
     manager = settings['manager']
     nodes = settings['nodes']
     cores_per_node = settings['cores_per_node']
+    threads_per_core = settings['threads_per_core']
     pw_executable = settings['qe_executable']
 
     # Use heuristics to trim down run conditions for small systems
@@ -85,9 +86,9 @@ def run_job():
 
     # Call the HPC-specific command to actually run
     if manager == 'slurm':
-        _run_on_slurm(nodes, cores_per_node, pw_executable)
+        _run_on_slurm(nodes, cores_per_node, threads_per_core, pw_executable)
     elif manager == 'lsf':
-        _run_on_lsf(nodes, cores_per_node, pw_executable)
+        _run_on_lsf(nodes, cores_per_node, threads_per_core, pw_executable)
     else:
         raise RuntimeError('espresso_tools does not yet know how to submit '
                            'jobs to the "%s" manager. Please modify '
