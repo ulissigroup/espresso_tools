@@ -46,7 +46,7 @@ def hpc_settings():
                     'nodes': 4,
                     'cores_per_node': 36,
                     'threads_per_core': 1,
-                    'wall_time': 20}  # in hours
+                    'wall_time': 24}  # in hours
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
