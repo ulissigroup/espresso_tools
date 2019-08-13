@@ -67,17 +67,18 @@ def create_rism_input_file(atom_hex, rism_settings):
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
     laue_starting_right = _calculate_laue_starting_right(atoms)
     calcmode = rism_settings.get('calcmode', 'relax')
+    settings = hpc_settings()
+
     # Get the FireWorks ID, which will be used as the directory for the
     # scratch/outdir files
     with open('FW.json', 'r') as file_handle:
         fw_info = json.load(file_handle)
     fw_id = fw_info['fw_id']
+    outdir = settings['scratch_dir'] + '/%s' % fw_id
 
     # Set the run-time to 2 minutes less than the job manager's wall time
-    settings = hpc_settings()
     wall_time = settings['wall_time']
     max_seconds = wall_time * 60 * 60 - 120
-    outdir = settings['scratch_dir'] + '/%i' % fw_id
 
     # Use rismespresso to do the heavy lifting
     calc = rismespresso(calcmode=calcmode,
