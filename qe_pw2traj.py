@@ -39,9 +39,24 @@ def write_traj(qe_log_name=None, output_traj_name='all.traj'):
                 break
 
     output_traj_name = 'all.traj'
+    check_for_completion(qe_log_name)
     images = read_positions_qe(qe_log_name, output_traj_name)
     ase.io.write(output_traj_name, images)
     return images
+
+
+def check_for_completion(qe_log_name):
+    '''
+    Reads an output file and verifies whether or not it actually finished.
+
+    Arg:
+        qe_log_name     A string indicating the path of the Quantum Espresso
+                        log file. If `None` then looks for a `firework-*.log`
+                        file.
+    '''
+    failed_convergence_flag = os.popen('grep \'convergence NOT achieved\' %s' % qe_log_name).readline()
+    assert not failed_convergence_flag, ('Calculation did not converge; '
+                                         'aborting the writing of traj file')
 
 
 def read_positions_qe(qe_output_name, output_traj_name, index=-1):
