@@ -108,7 +108,7 @@ def create_rism_input_file(atom_hex, rism_settings):
                         electron_maxstep=1000,
                         mixing_mode='local-TF',
                         laue_reference='right',
-                        rism3d_maxstep=25000,
+                        rism3d_maxstep=int(8e4),
                         rism1d_maxstep=int(1e5),
                         mdiis3d_size=15,
                         mdiis1d_size=20,
@@ -124,9 +124,9 @@ def create_rism_input_file(atom_hex, rism_settings):
 def _parse_atoms(atom_hex):
     '''
     This function will read the hex string and decode it to an `ase.Atoms`
-    object, and then it will add some vacuum space on top of the unit cell so
-    that the slab stays below the half-way point of the unit cell in the Z
-    direction. This is necessary to make sure that RISM works correctly.
+    object. It will then center the slab at Z = 0 and add either 20 Angstroms
+    of vacuum or the minimum vacuum size to let RISM run, whichever is greater.
+    The centering reduces unit cell size and therefore calculation speed.
 
     Arg:
         atom_hex    An `ase.Atoms` object encoded as a hex string.
@@ -138,10 +138,75 @@ def _parse_atoms(atom_hex):
 
     # Just make the cell twice the height of the highest atom, with an extra 1
     # Angstrom buffer
+    #max_height = max(atom.position[2] for atom in atoms)
+    #unit_cell = atoms.get_cell()
+    #unit_cell[2, 2] = 2*max_height + 1
+    #atoms.set_cell(unit_cell)
+    return atoms
+
+
+def _center_slab(atoms):
+    '''
+    This will center a slab or adslab so that the Cartesian middle-point of the
+    slab/adslab (in the Z-direction) will be at Z = 0. Any adsorbates will be
+    ignored.
+
+    Arg:
+        atoms   `ase.Atoms` object of the [ad]slab. As per the GASpy
+                infrastructure, we assume that atoms with the `0` tag are slab
+                atoms, and atoms with tags `> 0` are adsorbates.
+    Returns:
+        atoms   A new instance of the `ase.Atoms` where the [ad]slab is
+                centered.
+    '''
+    # Make a new instance so we don't mess with the old one
+    atoms = atoms.copy()
+
+    # Move the adslab down so that its center is at Z = 0
+    slab_atom_heights = [atom.position[2] for atom in atoms if atom.tag == 0]
+    slab_top = max(slab_atom_heights)
+    slab_bottom = min(slab_atom_heights)
+    slab_height = slab_top - slab_bottom
+    atoms.translate([0, 0, -(slab_top - slab_height/2)])
+    return atoms
+
+
+def _set_unit_cell_height(atoms):
+    '''
+    This will extend the height of the unit cell until it there is at least 20
+    Angstroms of vacuum or the height is twice the height of the [ad]slab,
+    whichever is greater. The former is to ensure steady-state of the
+    electrolyte in the z-direction, and the latter is to ensure that RISM can
+    actually run, since it requires that all atoms are within +/- L/2, where L
+    is the height of the unit cell.
+
+    NOTE:  This function assumes that the structure has already been centered
+    with the `_center_slab` function.
+
+    Arg:
+        atoms   `ase.Atoms` object of the [ad]slab. As per the GASpy
+                infrastructure, we assume that atoms with the `0` tag are slab
+                atoms, and atoms with tags `> 0` are adsorbates.
+    Returns:
+        atoms   A new instance of the `ase.Atoms` where the unit cell is set
+        appropriately.
+    '''
+    # Make a new instance so we don't mess with the old one
+    atoms = atoms.copy()
+
+    # Find the minimum cell height required to run RISM. This assumes that the
+    # slab has already been centered with `_center_slab`.
     max_height = max(atom.position[2] for atom in atoms)
-    unit_cell = atoms.get_cell()
-    unit_cell[2, 2] = 2*max_height + 1
-    atoms.set_cell(unit_cell)
+    min_height_for_rism = 2 * max_height + 1  # Add one Angstrom buffer for safety
+
+    # Find the minimum cell height required to yield 20 Angstroms of vacuum
+    slab_atom_heights = [atom.position[2] for atom in atoms if atom.tag == 0]
+    min_height_for_vacuum = max(slab_atom_heights) + 20.
+
+    # Set the cell height to the greater of the two heights
+    cell = atoms.get_cell()
+    cell[2, 2] = max(min_height_for_rism, min_height_for_vacuum)
+    atoms.set_cell(cell)
     return atoms
 
 
