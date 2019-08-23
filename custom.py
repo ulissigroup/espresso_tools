@@ -56,7 +56,7 @@ def hpc_settings():
                     'scratch_dir': '/p/gpfs1/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 40,
-                    'threads_per_core': 2,
+                    'threads_per_core': 1,
                     'wall_time': 12}  # in hours
 
     else:
