@@ -154,5 +154,6 @@ def _run_on_lsf(nodes, cores_per_node, threads_per_core, pw_executable):
                             Espresso executable file you want to use
     '''
     n_tasks = nodes * cores_per_node * threads_per_core
-    command = 'lrun -n%i %s -in pw.in' % (n_tasks, pw_executable)
+    command = 'lrun -n%i %s -nk%i -nd%i -in pw.in' % (n_tasks, pw_executable,
+                                                      threads_per_core, cores_per_node)
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
