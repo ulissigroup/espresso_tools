@@ -131,18 +131,14 @@ def _parse_atoms(atom_hex):
     Arg:
         atom_hex    An `ase.Atoms` object encoded as a hex string.
     Returns:
-        atoms       The decoded `ase.Atoms` object, but also with a vacuum
-                    buffer at the top of the unit cell.
+        parsed_atoms    The decoded `ase.Atoms` object, but also with a vacuum
+                        buffer at the top of the unit cell and with the slab
+                        centered at Z=0
     '''
     atoms = decode_trajhex_to_atoms(atom_hex)
-
-    # Just make the cell twice the height of the highest atom, with an extra 1
-    # Angstrom buffer
-    #max_height = max(atom.position[2] for atom in atoms)
-    #unit_cell = atoms.get_cell()
-    #unit_cell[2, 2] = 2*max_height + 1
-    #atoms.set_cell(unit_cell)
-    return atoms
+    centered_atoms = _center_slab(atoms)
+    parsed_atoms = _set_unit_cell_height(centered_atoms)
+    return parsed_atoms
 
 
 def _center_slab(atoms):
