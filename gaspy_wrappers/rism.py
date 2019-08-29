@@ -136,9 +136,18 @@ def _parse_atoms(atom_hex):
                         centered at Z=0
     '''
     atoms = decode_trajhex_to_atoms(atom_hex)
-    centered_atoms = _center_slab(atoms)
-    parsed_atoms = _set_unit_cell_height(centered_atoms)
-    return parsed_atoms
+
+    # Fix the centering and unit cell of slabs and adsorbate+slabs
+    try:
+        centered_atoms = _center_slab(atoms)
+        parsed_atoms = _set_unit_cell_height(centered_atoms)
+        return parsed_atoms
+
+    # If there are no slab atoms (e.g., if we are doing just a molecule), then
+    # there's no need to do this processing. The
+    # `__update_molecular_parameters` function will take care of that.
+    except ValueError:
+        return atoms
 
 
 def _center_slab(atoms):
@@ -286,9 +295,17 @@ def _calculate_laue_starting_right(atoms):
         starting_height     A float indicating the location in the z-direction
                             at which to start the laue region (Angstroms).
     '''
-    max_height = max(atom.position[2] for atom in atoms if atom.tag == 0)
-    starting_height = max_height - 1.
-    return starting_height
+    try:
+        max_height = max(atom.position[2] for atom in atoms if atom.tag == 0)
+        starting_height = max_height - 1.
+        return starting_height
+
+    # If there are no atoms with a tag of 0, then we're dealing with a
+    # molecule. And if we're dealing with a molecule, then it doesn't matter
+    # what we return here. It'll just be overridden by the
+    # `__update_molecular_parameters` function.
+    except ValueError:
+        return 0
 
 
 def _post_process_rismespresso(calc, atoms, rism_settings):
