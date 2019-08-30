@@ -7,6 +7,7 @@ __authors__ = ['Kevin Tran']
 __emails__ = ['ktran@andrew.cmu.edu']
 
 import subprocess
+import time
 import ase.io
 from ..qe_pw2traj import write_traj
 from ..custom import hpc_settings
@@ -94,6 +95,13 @@ def run_job():
                            'jobs to the "%s" manager. Please modify '
                            'espresso_tools.gaspy_wrappers.core.run_job '
                            'to specify.' % manager)
+
+    # We think that FireWorks or Quantum Espresso give Python the stdout before
+    # it's written to the log file. When this happens, espresso_tools ends up
+    # reading an incomplete log file and fails. We hack around this issue by
+    # waiting two minutes for Quantum Espresso/FireWorks to finish writing to
+    # the output file.
+    time.sleep(120)  # accepts units of seconds
 
 
 def _find_n_atoms():
