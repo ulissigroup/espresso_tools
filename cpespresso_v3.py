@@ -1899,8 +1899,15 @@ class cpespresso(Calculator):
             self.params_ion['nhpcl'] = min([len(self.params_ion['nhfreq']), 4])
 
         # make RISM nsolv compatible with solvent inputs
-        sollist = [specie for key in ['solvents', 'cations', 'anions']
-                   for specie in self.params_rism[key]]
+        try:
+            sollist = [specie for key in ['solvents', 'cations', 'anions']
+                       for specie in self.params_rism[key]]
+        # If there are no solvents, cations, or anions, then Python will fail
+        # to iterate through `None`. This normally happens when we run vanilla
+        # QE, in which case there are no solvent species.
+        except TypeError:
+            sollist = []
+
         if sollist:
             self.params_rism['nsolv'] = len(sollist)
 
