@@ -58,13 +58,13 @@ def create_vanilla_input_file(atom_hex, qe_settings):
     # Get the FireWorks ID, which will be used as the QE prefix
     with open('FW.json', 'r') as file_handle:
         fw_info = json.load(file_handle)
-    prefix = fw_info['fw_id']
+    fw_id = fw_info['fw_id']
 
     # Set the run-time to 2 minutes less than the job manager's wall time
     settings = hpc_settings()
     wall_time = settings['wall_time']
     max_seconds = wall_time * 60 * 60 - 120
-    outdir = settings['scratch_dir']
+    outdir = settings['scratch_dir'] + '/%s' % fw_id
 
     # Use espressotools to do the heavy lifting
     calc = espresso(calcmode=calcmode,
@@ -83,6 +83,6 @@ def create_vanilla_input_file(atom_hex, qe_settings):
                     deuterate=0,
                     max_seconds=max_seconds,
                     outdir=outdir,
-                    prefix=prefix)
+                    prefix=fw_id)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])
     calc.initialize(atoms)
