@@ -103,7 +103,7 @@ def create_rism_input_file(atom_hex, rism_settings):
                         rism3d_conv_thr=rism_settings['rism3d_conv_thr'],
                         rism3d_conv_level=rism_settings['rism3d_conv_level'],
                         mdiis3d_step=rism_settings['mdiis3d_step'],
-                        nosym=1,
+                        nosym=rism_settings['nosym'],
                         nstep=200,
                         electron_maxstep=1000,
                         mixing_mode='local-TF',
