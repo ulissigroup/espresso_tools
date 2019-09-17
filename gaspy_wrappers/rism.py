@@ -68,6 +68,10 @@ def create_rism_input_file(atom_hex, rism_settings):
     laue_starting_right = _calculate_laue_starting_right(atoms)
     calcmode = rism_settings.get('calcmode', 'relax')
     settings = hpc_settings()
+    try:
+        nosym = rism_settings['nosym']
+    except KeyError:
+        nosym = False
 
     # Get the FireWorks ID, which will be used as the directory for the
     # scratch/outdir files
@@ -103,7 +107,7 @@ def create_rism_input_file(atom_hex, rism_settings):
                         rism3d_conv_thr=rism_settings['rism3d_conv_thr'],
                         rism3d_conv_level=rism_settings['rism3d_conv_level'],
                         mdiis3d_step=rism_settings['mdiis3d_step'],
-                        nosym=rism_settings['nosym'],
+                        nosym=nosym,
                         nstep=200,
                         electron_maxstep=1000,
                         mixing_mode='local-TF',

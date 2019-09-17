@@ -55,6 +55,10 @@ def create_vanilla_input_file(atom_hex, qe_settings):
     atoms = decode_trajhex_to_atoms(atom_hex)
     pspdir, setups = populate_pseudopotentials(qe_settings['psps'], qe_settings['xcf'])
     calcmode = qe_settings.get('calcmode', 'relax')
+    try:
+        nosym = qe_settings['nosym']
+    except KeyError:
+        nosym = False
     # Get the FireWorks ID, which will be used as the QE prefix
     with open('FW.json', 'r') as file_handle:
         fw_info = json.load(file_handle)
@@ -81,7 +85,7 @@ def create_vanilla_input_file(atom_hex, qe_settings):
                     # non-zero for gaussian smearing
                     sigma=qe_settings['sigma'],
                     deuterate=0,
-                    nosym=qe_settings['nosym'],
+                    nosym=nosym,
                     max_seconds=max_seconds,
                     outdir=outdir,
                     prefix=fw_id)
