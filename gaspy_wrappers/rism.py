@@ -92,6 +92,7 @@ def create_rism_input_file(atom_hex, rism_settings):
                         kpts=rism_settings['kpts'],
                         kptshift=(0, 0, 0),
                         sigma=rism_settings['sigma'],
+                        smearing=rism_settings['smearing'],
                         spinpol=rism_settings['spol'],
                         psppath=pspdir,
                         setups=setups,
