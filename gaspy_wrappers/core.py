@@ -142,8 +142,8 @@ def _run_on_slurm(nodes, cores_per_node, threads_per_core, pw_executable):
                             Espresso executable file you want to use
     '''
     n_tasks = nodes * cores_per_node * threads_per_core
-    command = ('srun --nodes=%i --ntasks=%i %s -in pw.in'
-               % (nodes, n_tasks, pw_executable))
+    command = ('srun --nodes=%i --ntasks=%i < pw.in %s -nk %i -nd %i'
+               % (nodes, n_tasks, pw_executable, nodes, cores_per_node))
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
 
 
@@ -162,5 +162,6 @@ def _run_on_lsf(nodes, cores_per_node, threads_per_core, pw_executable):
                             Espresso executable file you want to use
     '''
     n_tasks = nodes * cores_per_node * threads_per_core
-    command = 'lrun -n%i %s -nk1 -nd16 -in pw.in' % (n_tasks, pw_executable)
+    command = ('lrun -n%i %s -nk%s -nd%i -in pw.in'
+               % (n_tasks, pw_executable, nodes, cores_per_node))
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
