@@ -85,6 +85,7 @@ def create_vanilla_input_file(atom_hex, qe_settings):
                     # non-zero for gaussian smearing
                     sigma=qe_settings['sigma'],
                     smearing=qe_settings['smearing'],
+                    mixing_mode='local-TF',
                     deuterate=0,
                     nosym=nosym,
                     max_seconds=max_seconds,
