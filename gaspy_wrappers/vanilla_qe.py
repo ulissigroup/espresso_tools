@@ -89,6 +89,7 @@ def create_vanilla_input_file(atom_hex, qe_settings):
                     deuterate=0,
                     nosym=nosym,
                     max_seconds=max_seconds,
+                    electron_maxstep=int(1e3),
                     outdir=outdir,
                     prefix=fw_id)
     calc.set(atoms=atoms, kpts=qe_settings['kpts'])
