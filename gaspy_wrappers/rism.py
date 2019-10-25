@@ -113,7 +113,7 @@ def create_rism_input_file(atom_hex, rism_settings):
                         electron_maxstep=1000,
                         mixing_mode='local-TF',
                         laue_reference='right',
-                        rism3d_maxstep=int(8e4),
+                        rism3d_maxstep=int(5e5),
                         rism1d_maxstep=int(1e5),
                         mdiis3d_size=15,
                         mdiis1d_size=20,
@@ -443,4 +443,6 @@ def __update_molecular_parameters(calc, atoms, rism_settings):
                  laue_reference='average',
                  isolated='esm',
                  esm_bc='bc1',
+                 startingpot=1,
+                 startingwfc=1,
                  constmu=None)
