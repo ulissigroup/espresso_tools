@@ -315,10 +315,16 @@ def get_number_of_images(filename):
         n_images    An integer for the total number of images, including the
                     initial
     '''
-    step_counter = os.popen('grep \'number of scf cycles\' %s' % filename)
-    steps = [int(line.split()[-1]) for line in step_counter]
-    n_images = max(steps) + 1
-    return n_images
+    qeprogram, qeversion = [i.split() for i in os.popen('grep Program %s' % (filename)).readlines()][0][1:3]
+    if qeprogram == 'PWSCF':
+        poscmd = 'sed -e \'/./{H;$!d;}\' -e \'x;/ATOMIC_POS/!d;\' %s | sed -e \'/^ *$/d\' ' % (filename)
+    elif qeprogram == 'CP':
+        poscmd = 'sed -n \'/ATOMIC_POS/,/ATOMIC_VEL/p\' %s | sed -e \'/VELOCITIES/d\' -e \'/^ *$/d\' ' % (filename)
+    poscoord = os.popen(poscmd)
+    posraw = [i for i in poscoord.readlines()]
+    poslineno = [i for i, val in enumerate(posraw) if 'POSITIONS' in val]
+    nsteps = len(poslineno)
+    return nsteps
 
 
 def get_number_of_atoms(filename):
