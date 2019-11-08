@@ -253,9 +253,17 @@ def format_positions(positions_unformatted, latscale=1.0):
 
     Can enter a scaling parameter to scale all returned positions.
     """
-    return [[val[0],
-             latscale * np.array([float(j) for j in val[1:]])] for k,
-            val in enumerate(positions_unformatted)]
+    positions = []
+    for atomic_info in positions_unformatted:
+        element = atomic_info[0]
+        coords = atomic_info[1:4]
+        try:
+            coords = np.array([float(coords) for coords in coords])
+        except ValueError:
+            continue
+        position = [element, coords]
+        positions.append(position)
+    return positions
 
 
 def get_total_energies(filename):
