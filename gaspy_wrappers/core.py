@@ -8,6 +8,7 @@ __emails__ = ['ktran@andrew.cmu.edu']
 
 import subprocess
 import time
+import math
 import ase.io
 from ..qe_pw2traj import write_traj
 from ..custom import hpc_settings
@@ -84,6 +85,7 @@ def run_job():
     # Use heuristics to trim down run conditions for small systems
     if _find_n_atoms() <= 5:
         nodes = 1
+        cores_per_node = math.ceil(cores_per_node / 2)
 
     # Call the HPC-specific command to actually run
     if manager == 'slurm':
