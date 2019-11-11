@@ -83,9 +83,14 @@ def run_job():
     pw_executable = settings['qe_executable']
 
     # Use heuristics to trim down run conditions for small systems
-    if _find_n_atoms() <= 5:
+    min_atoms = 5
+    if _find_n_atoms() <= min_atoms:
         nodes = 1
         cores_per_node = max(math.ceil(cores_per_node / 2), 4)
+        print('Less than %i atoms, so we are assuming this is a gas phase '
+              'calculation and using %i node and %i cores per node to ensure '
+              'that there are more processors than bands.'
+              % (min_atoms, nodes, cores_per_node))
 
     # Call the HPC-specific command to actually run
     if manager == 'slurm':
