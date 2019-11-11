@@ -85,7 +85,7 @@ def run_job():
     # Use heuristics to trim down run conditions for small systems
     if _find_n_atoms() <= 5:
         nodes = 1
-        cores_per_node = max(math.ceil(cores_per_node / 2), 4)
+        cores_per_node = max(math.ceil(cores_per_node / 2), 2)
 
     # Call the HPC-specific command to actually run
     if manager == 'slurm':
