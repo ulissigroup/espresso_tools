@@ -149,8 +149,8 @@ def extract_coordinates(qe_output_name):
 
     poscoord = os.popen(poscmd)
     posraw = [i for i in poscoord.readlines()]
-    poslineno = [i for i, val in enumerate(posraw) if 'POSITIONS' in val]
     pos = [i.split() for i in posraw if 'final' not in i]
+    poslineno = [i for i, line in enumerate(pos) for word in line if 'POSITIONS' in word]
 
     # establish absolute or relative coordinates
     if 'crystal' in pos[0][-1]:
@@ -210,7 +210,7 @@ def extract_coordinates(qe_output_name):
             steps[i] = {}
             # assumes that the ATOMIC_POSITIONS is still included, (why the +1
             # is there)
-            pos_unformatted = pos[poslineno[i] + 1:poslineno[i + 1]]
+            pos_unformatted = pos[poslineno[i]:poslineno[i + 1]]
             # assumes that the ATOMIC_POSITIONS is still included, (why the +1
             # is there)
             cell_unformatted = scell[celllineno[i] + 1:celllineno[i + 1]]
