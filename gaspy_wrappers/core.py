@@ -172,4 +172,5 @@ def _run_on_lsf(nodes, cores_per_node, threads_per_core, pw_executable):
     n_tasks = nodes * cores_per_node * threads_per_core
     command = ('lrun -n%i %s -nk%s -nd%i -in pw.in'
                % (n_tasks, pw_executable, nodes, cores_per_node))
+    print('Executing:  %s' % command)
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
