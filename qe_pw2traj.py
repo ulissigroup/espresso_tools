@@ -38,7 +38,6 @@ def write_traj(qe_log_name=None, output_traj_name='all.traj'):
                 qe_log_name = file_
                 break
 
-    output_traj_name = 'all.traj'
     check_for_completion(qe_log_name)
     images = read_positions_qe(qe_log_name, output_traj_name)
     ase.io.write(output_traj_name, images)
