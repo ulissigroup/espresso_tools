@@ -6,6 +6,8 @@ CMU's GASpy. Requires Python 3
 __authors__ = ['Kevin Tran']
 __emails__ = ['ktran@andrew.cmu.edu']
 
+import glob
+import shutil
 import subprocess
 import time
 import math
@@ -174,3 +176,26 @@ def _run_on_lsf(nodes, cores_per_node, threads_per_core, pw_executable):
                % (n_tasks, pw_executable, nodes, cores_per_node))
     print('Executing:  %s' % command)
     _ = subprocess.Popen(command.split()).communicate()  # noqa: F841
+
+
+def move_initialization_output():
+    '''
+    This function will copy the fireworks output file to the
+    'initialization.out' file and then empty out the output file.
+
+    Note that we tried moving it, but that didn't work because FireWorks
+    started piping to the moved file.
+
+    Args:
+        source      A string indicating the file you want to move. Defaults to
+                    the first thing that fits the 'fireworks-*.out' wildcard.
+        destination A string indication the destination file. Defaults to
+                    'initialization.out'
+    '''
+    # Copy the current output
+    source = glob.glob('fireworks-*.out')[0]
+    destination = 'initialization.out'
+    _ = shutil.copy(source, destination)  # noqa: F841
+
+    # Clear out the current output
+    open(source, 'w').close()
