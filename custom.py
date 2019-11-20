@@ -39,24 +39,20 @@ def hpc_settings():
 
     if 'quartz' in node_name:
         settings = {'manager': 'slurm',
-                    'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
-                                      '/q-e-modified-pprism_beef/bin/pw.x'),
+                    'qe_executable': '/usr/workspace/woodgrp/catalysis/Codes/q-e-modified-pprism_beef/bin/pw.x',
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'scratch_dir': '/p/lscratchh/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 36,
-                    'threads_per_core': 1,
                     'wall_time': 24}  # in hours
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
-                    'qe_executable': ('/usr/workspace/woodgrp/catalysis/Codes'
-                                      '/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x'),
+                    'qe_executable': '/usr/workspace/woodgrp/catalysis/Codes/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x',
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'scratch_dir': '/p/gpfs1/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 40,
-                    'threads_per_core': 1,
                     'wall_time': 12}  # in hours
 
     else:
