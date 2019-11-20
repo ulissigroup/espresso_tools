@@ -8,5 +8,6 @@ __email__ = 'ktran@andrew.cmu.edu'
 
 # flake8:  noqa
 
+from .core import move_initialization_output
 from .vanilla_qe import run_qe
 from .rism import run_rism
