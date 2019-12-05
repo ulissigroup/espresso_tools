@@ -31,17 +31,28 @@ def write_traj(qe_log_name=None, output_traj_name='all.traj'):
     '''
     # When defaulting, look for a 'fireworks-*.log' file
     if qe_log_name is None:
-        for file_ in os.listdir():
-            file_name = file_.split('.')[0]
-            file_extension = file_.split('.')[-1]
-            if 'fireworks' in file_name and file_extension == 'out':
-                qe_log_name = file_
-                break
+        qe_log_name = _find_qe_output_name()
 
     check_for_completion(qe_log_name)
     images = read_positions_qe(qe_log_name, output_traj_name)
     ase.io.write(output_traj_name, images)
     return images
+
+
+def _find_qe_output_name():
+    '''
+    This function will assume that you're using FireWorks with output file
+    names of `fireworks-*.out`, and then find the exact name of the output file
+    for you.
+
+    Returns:
+        file_   A string indicating the file name we found.
+    '''
+    for file_ in os.listdir():
+        file_name = file_.split('.')[0]
+        file_extension = file_.split('.')[-1]
+        if 'fireworks' in file_name and file_extension == 'out':
+            return file_
 
 
 def check_for_completion(qe_log_name):

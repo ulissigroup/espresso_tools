@@ -11,7 +11,7 @@ __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
 import json
 import numpy as np
-from .core import _run_qe, decode_trajhex_to_atoms
+from .core import _run_qe, _find_qe_output_name, decode_trajhex_to_atoms
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
 from ..custom import hpc_settings, LJ_PARAMETERS
@@ -39,10 +39,12 @@ def run_rism(atom_hex, rism_settings):
         traj_hex    The entire `ase.Atoms` trajectory converted into a hex
                     string
         energy      The final potential energy of the system [eV]
+        charge      The final charge of the system [eV?]
     '''
     atoms_name, traj_hex, energy = _run_qe(atom_hex, rism_settings,
                                            create_rism_input_file)
-    return atoms_name, traj_hex, energy
+    charge = _read_charge_from_output()
+    return atoms_name, traj_hex, energy, charge
 
 
 def create_rism_input_file(atom_hex, rism_settings):
@@ -446,3 +448,20 @@ def __update_molecular_parameters(calc, atoms, rism_settings):
                  startingpot=1,
                  startingwfc=1,
                  constmu=None)
+
+
+def _read_charge_from_output(qe_output_name):
+    '''
+    '''
+    # If the log file is not provided, then guess it
+    if qe_output_name is None:
+        qe_log_name = _find_qe_output_name()
+
+    # We assume the log file will say something like:
+    # "solvent charge   -0.00322, renormalised to    0.00000"
+    # so we grep it accordingly
+    with open(qe_log_name) as file_handle:
+        for line in reversed(file_handle.readlines()):
+            if 'solvent charge' in line:
+                charge = float(line.split(',')[0].split()[-1])
+                return charge
