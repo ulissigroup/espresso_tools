@@ -11,6 +11,7 @@ __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
 import json
 import numpy as np
+from ase.data import covalent_radii
 from .core import _run_qe, _find_qe_output_name, decode_trajhex_to_atoms
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
@@ -293,10 +294,7 @@ def _calculate_laue_starting_right(atoms):
     This function will calculate the location you should use for
     "laue_starting_right". In other words, it tells you where to start the
     mean-field section in the z-axis. Here, we set it equal to 1 Angstrom below
-    the upper-most slab atom.
-
-    Note that we assume that the atoms objects are coming from GASpy, which
-    sets the tags of slab atoms to `0` and adsorbate atoms to `> 0`.
+    the lowest surface atom.
 
     Arg:
         atoms   The `ase.Atoms` object you're trying to relax
@@ -304,17 +302,72 @@ def _calculate_laue_starting_right(atoms):
         starting_height     A float indicating the location in the z-direction
                             at which to start the laue region (Angstroms).
     '''
-    try:
-        max_height = max(atom.position[2] for atom in atoms if atom.tag == 0)
-        starting_height = max_height - 1.
-        return starting_height
+    surface_atom_indices = find_surface_atom_indices(atoms)
+    positions = atoms.get_positions()
+    starting_height = min(positions[i][2] for i in surface_atom_indices) - 1
+    return starting_height
 
-    # If there are no atoms with a tag of 0, then we're dealing with a
-    # molecule. And if we're dealing with a molecule, then it doesn't matter
-    # what we return here. It'll just be overridden by the
-    # `__update_molecular_parameters` function.
-    except ValueError:
-        return 0
+
+def find_surface_atom_indices(atoms, covalent_percent=1.25):
+    '''
+    If an atom is under-coordinated relative to the maximum coordination of its
+    corresponding element, then it is considered a surface atom. This function
+    finds these surface atoms and gives you their indices. Note that this
+    function assumes that two atoms are "coordinated" if their distance is smaller
+    than the sum of their covalent radii.
+
+    Loosely based on a gist from tgmaxson
+    (https://gist.github.com/tgmaxson/8b9d8b40dc0ba4395240).
+
+    Args:
+        atoms               `ase.Atoms` object of the slab you want to find the
+                            surface atoms of
+        covalent_percent    Fudge [float] that assigns "bonds" more liberally
+                            (or conservatively) based on their interatomic
+                            distances. Increase to have more "bonding" and vice
+                            versa.
+    Returns:
+        surface_indices     A list of integers corresponding to the indices of
+                            the surface atoms within the provided `ase.Atoms`
+                            object.
+    '''
+    # Get the covalent radius of each atom
+    radii = np.take(covalent_radii, atoms.numbers)
+
+    # Get all the distances between each of the atoms
+    scaled_distances = np.divide(atoms.get_all_distances(mic=True), covalent_percent)
+
+    # Create the connectivity matrix that has 1's where there is a bond and 0's
+    # where there is not a bond. The indices of the matrix correspond to the
+    # indices of the atoms in the `ase.Atoms` object.
+    connectivity_matrix = np.empty((len(atoms), len(atoms)))
+    for i, radius_i in enumerate(radii):
+        for j, radius_j in enumerate(radii):
+            if i != j and scaled_distances[i, j] <= radius_i + radius_j:
+                connectivity_matrix[i, j] = 1
+            else:
+                connectivity_matrix[i, j] = 0
+    coordinations = connectivity_matrix.sum(axis=0)
+
+    # Find the maximum coordination for each element
+    elements = {atom.symbol for atom in atoms}
+    max_coords = dict.fromkeys(elements, 0)
+    for atom, coordination in zip(atoms, coordinations):
+        element = atom.symbol
+        max_coords[element] = max(max_coords[element], coordination)
+
+    # Find all the surface atoms based on their coordination
+    scaled_positions = atoms.get_scaled_positions()
+    surface_indices = []
+    for i, (atom, scaled_position, coordination) in enumerate(zip(atoms, scaled_positions, coordinations)):
+        # Don't want to find atoms on the bottom of the slab
+        if scaled_position[2] > 0.5:
+            # Reduced the coordination cutoff threshold as a heuristic to
+            # compensate for naturally under-coordinated atoms
+            if coordination < max_coords[atom.symbol] - 2:
+                surface_indices.append(i)
+
+    return surface_indices
 
 
 def _post_process_rismespresso(calc, atoms, rism_settings):
