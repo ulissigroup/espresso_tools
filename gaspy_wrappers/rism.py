@@ -119,6 +119,8 @@ def create_rism_input_file(atom_hex, rism_settings):
                         rism1d_maxstep=int(1e5),
                         mdiis3d_size=15,
                         mdiis1d_size=20,
+                        startingpot=rism_settings['startingpot'],
+                        startingwfc=rism_settings['startingwfc'],
                         outdir=outdir,
                         prefix='rism')
     calc.set(atoms=atoms)
