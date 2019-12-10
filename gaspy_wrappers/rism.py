@@ -36,11 +36,11 @@ def run_rism(atom_hex, rism_settings):
                         You may find a good set of defaults somewhere in in
                         `gaspy.defaults`
     Returns:
-        atoms_name  The `ase.Atoms` object converted into a string
-        traj_hex    The entire `ase.Atoms` trajectory converted into a hex
-                    string
-        energy      The final potential energy of the system [eV]
-        charge      The final charge of the system [eV?]
+        atoms_name      The `ase.Atoms` object converted into a string
+        traj_hex        The entire `ase.Atoms` trajectory converted into a hex
+                        string
+        energy          The final potential energy of the system [eV]
+        fermi_energy    The final Fermi energy of the system [eV]
     '''
     atoms_name, traj_hex, energy = _run_qe(atom_hex, rism_settings,
                                            create_rism_input_file)
@@ -383,7 +383,7 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
         atoms           The `ase.Atoms` structure you're trying to relax
         rism_settings   A dictionary whose key/values may trigger the
                         post-processing. Possible keys may include:
-                            starting_charges
+                            starting_charge
                             esm_only
                             target_fermi
                             LJ_epsilon
@@ -392,9 +392,9 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
                             charge
     '''
     # Set the initial charges
-    starting_charges = rism_settings['starting_charges']
-    if starting_charges:
-        starting_charge = format_LJ(atoms, starting_charges)
+    starting_charge = rism_settings['starting_charge']
+    if starting_charge:
+        starting_charge = format_LJ(atoms, starting_charge)
         calc.set(starting_charge=starting_charge)
 
     # Whether or not you want to do just ESM (True), or ESM-RISM (False)
