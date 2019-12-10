@@ -44,8 +44,8 @@ def run_rism(atom_hex, rism_settings):
     '''
     atoms_name, traj_hex, energy = _run_qe(atom_hex, rism_settings,
                                            create_rism_input_file)
-    charge = _read_charge_from_output()
-    return atoms_name, traj_hex, energy, charge
+    fermi_energy = _read_fermi_from_output()
+    return atoms_name, traj_hex, energy, fermi_energy
 
 
 def create_rism_input_file(atom_hex, rism_settings):
@@ -505,18 +505,25 @@ def __update_molecular_parameters(calc, atoms, rism_settings):
                  constmu=None)
 
 
-def _read_charge_from_output(qe_output_name):
+def _read_fermi_from_output(qe_output_name):
     '''
+    This function will try to get the last Fermi energy reported in the RISM-QE
+    log file.
+
+    Arg:
+        qe_output_name  String indicating the location of the RISM-QE output
+                        file
+    Returns:
+        fermi   The last reported Fermi energy in the log file [eV]
     '''
     # If the log file is not provided, then guess it
     if qe_output_name is None:
         qe_log_name = _find_qe_output_name()
 
     # We assume the log file will say something like:
-    # "solvent charge   -0.00322, renormalised to    0.00000"
-    # so we grep it accordingly
+    # "the Fermi energy is    -4.6007 ev" so we grep it accordingly
     with open(qe_log_name) as file_handle:
         for line in reversed(file_handle.readlines()):
-            if 'solvent charge' in line:
-                charge = float(line.split(',')[0].split()[-1])
-                return charge
+            if 'the Fermy energy is' in line:
+                fermi = float(line.split('')[-2])
+                return fermi
