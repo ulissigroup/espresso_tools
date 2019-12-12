@@ -12,7 +12,8 @@ __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 import json
 import numpy as np
 from ase.data import covalent_radii
-from .core import _run_qe, _find_qe_output_name, decode_trajhex_to_atoms
+from .core import _run_qe, decode_trajhex_to_atoms
+from ..qe_pw2traj import _find_qe_output_name
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
 from ..custom import hpc_settings, LJ_PARAMETERS
