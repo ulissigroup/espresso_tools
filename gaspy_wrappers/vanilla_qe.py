@@ -64,10 +64,10 @@ def create_vanilla_input_file(atom_hex, qe_settings):
         fw_info = json.load(file_handle)
     fw_id = fw_info['fw_id']
 
-    # Set the run-time to 2 minutes less than the job manager's wall time
+    # Set the run-time to 5 minutes less than the job manager's wall time
     settings = hpc_settings()
     wall_time = settings['wall_time']
-    max_seconds = wall_time * 60 * 60 - 120
+    max_seconds = wall_time * 60 * 60 - 300
     outdir = settings['scratch_dir'] + '/%s' % fw_id
 
     # Use espressotools to do the heavy lifting
