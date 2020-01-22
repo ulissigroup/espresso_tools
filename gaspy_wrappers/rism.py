@@ -9,6 +9,7 @@ https://journals.aps.org/prb/pdf/10.1103/PhysRevB.96.115429
 __authors__ = ['Joel Varley', 'Kevin Tran']
 __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
+import warnings
 import json
 import numpy as np
 from ase.data import covalent_radii
@@ -305,8 +306,15 @@ def _calculate_laue_starting_right(atoms):
     '''
     surface_atom_indices = find_surface_atom_indices(atoms)
     positions = atoms.get_positions()
-    starting_height = min(positions[i][2] for i in surface_atom_indices) - 1
-    return starting_height
+    try:
+        starting_height = min(positions[i][2] for i in surface_atom_indices) - 1
+        return starting_height
+
+    except ValueError:
+        warnings.warn('No surface atoms were found. We will assume that this is '
+                      'a molecular relaxation and set `laue_starting_right` to 0',
+                      RuntimeWarning)
+        return 0
 
 
 def find_surface_atom_indices(atoms, covalent_percent=1.25):
