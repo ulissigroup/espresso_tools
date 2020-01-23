@@ -189,27 +189,31 @@ def _find_old_launch_directory(fw_json='FW.json'):
                                        projection={'fw_id': 1, 'launch_dir': 1, '_id': 0}))
     launches = sorted(launches, key=lambda launch: launch['fw_id'], reverse=True)
 
-    # Find launches that ended in a walltime error
+    # Look through all the files in the previous launch directory
     restart_message = 'Found an old launch directory; will try to restart there:  '
     for launch in launches:
         launch_dir = launch['launch_dir']
         try:
+
+            # If the launch we are looking at was actually based on a launch
+            # before that, then look in the original launch directory
             for file_name in os.listdir(launch_dir):
+                if file_name.endswith('out'):
+                    with open(os.path.join(launch_dir, file_name), 'r') as file_handle:
+                        for line in file_handle.readlines():
+                            if line.startswith(restart_message):
+                                launch_dir = line.split(restart_message)[-1]
+                    break
+
+            # If the launch directory we're looking at hit wall time, then return it
+            for file_name in sorted(os.listdir(launch_dir), reverse=True):
                 if file_name.endswith('error'):
                     with open(os.path.join(launch_dir, file_name), 'r') as file_handle:
                         for line in reversed(file_handle.readlines()):
                             if 'AssertionError: Calculation hit the wall time' in line:
                                 print(restart_message + launch_dir)
                                 return launch_dir
-
-                # Recursive restart, i.e., if we are looking at a launch_dir that
-                # already jumped back into an older launch_dir, then follow it
-                elif file_name.endswith('out'):
-                    with open(os.path.join(launch_dir, file_name), 'r') as file_handle:
-                        for line in file_handle.readlines():
-                            if line.startswith(restart_message):
-                                launch_dir = line.split(restart_message)[-1]
-                                return launch_dir
+                    break
 
         # Move on if the launch directory doesn't exist on this host
         except FileNotFoundError:
