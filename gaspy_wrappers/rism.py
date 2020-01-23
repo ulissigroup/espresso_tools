@@ -9,10 +9,13 @@ https://journals.aps.org/prb/pdf/10.1103/PhysRevB.96.115429
 __authors__ = ['Joel Varley', 'Kevin Tran']
 __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
+import os
 import warnings
 import json
+import fileinput
 import numpy as np
 from ase.data import covalent_radii
+from fireworks import LaunchPad
 from .core import _run_qe, decode_trajhex_to_atoms
 from ..qe_pw2traj import _find_qe_output_name
 from ..cpespresso_v3 import rismespresso
@@ -65,72 +68,184 @@ def create_rism_input_file(atom_hex, rism_settings):
     Returns:
         atoms   The `ase.Atoms` object that was decoded from the hex string.
     '''
-    # Parse various input parameters/settings into formats accepted by the
-    # `rismespresso` class
-    atoms = _parse_atoms(atom_hex)
-    pspdir, setups = populate_pseudopotentials(rism_settings['psps'], rism_settings['xcf'])
-    solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
-    laue_starting_right = _calculate_laue_starting_right(atoms)
-    calcmode = rism_settings.get('calcmode', 'relax')
-    settings = hpc_settings()
+    # If we've already tried this calculation on this host and it timed out
+    # gracefully, then we instead restart that old calculation.
     try:
-        nosym = rism_settings['nosym']
-    except KeyError:
-        nosym = False
+        create_restart_input_file()
 
-    # Get the FireWorks ID, which will be used as the directory for the
-    # scratch/outdir files
-    with open('FW.json', 'r') as file_handle:
+    # Otherwise, we need to start from scratch
+    except FileNotFoundError:
+        # Parse various input parameters/settings into formats accepted by the
+        # `rismespresso` class
+        atoms = _parse_atoms(atom_hex)
+        pspdir, setups = populate_pseudopotentials(rism_settings['psps'], rism_settings['xcf'])
+        solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
+        laue_starting_right = _calculate_laue_starting_right(atoms)
+        calcmode = rism_settings.get('calcmode', 'relax')
+        settings = hpc_settings()
+        try:
+            nosym = rism_settings['nosym']
+        except KeyError:
+            nosym = False
+
+        # Get the FireWorks ID, which will be used as the directory for the
+        # scratch/outdir files
+        with open('FW.json', 'r') as file_handle:
+            fw_info = json.load(file_handle)
+        fw_id = fw_info['fw_id']
+        outdir = settings['scratch_dir'] + '/%s' % fw_id
+
+        # Set the run-time to 2 minutes less than the job manager's wall time
+        wall_time = settings['wall_time']
+        max_seconds = wall_time * 60 * 60 - 120
+
+        # Use rismespresso to do the heavy lifting
+        calc = rismespresso(calcmode=calcmode,
+                            printforces=True,
+                            xc=rism_settings['xcf'],
+                            pw=rism_settings['encut'],
+                            kpts=rism_settings['kpts'],
+                            kptshift=(0, 0, 0),
+                            sigma=rism_settings['sigma'],
+                            smearing=rism_settings['smearing'],
+                            spinpol=rism_settings['spol'],
+                            psppath=pspdir,
+                            setups=setups,
+                            max_seconds=max_seconds,
+                            solvents=solvents,
+                            cations=cations,
+                            anions=anions,
+                            laue_starting_right=laue_starting_right,
+                            conv_thr=rism_settings['conv_elec'],
+                            laue_expand_right=rism_settings['laue_expand_right'],
+                            mdiis1d_step=rism_settings['mdiis1d_step'],
+                            rism1d_conv_thr=rism_settings['rism1d_conv_thr'],
+                            rism3d_conv_thr=rism_settings['rism3d_conv_thr'],
+                            rism3d_conv_level=rism_settings['rism3d_conv_level'],
+                            mdiis3d_step=rism_settings['mdiis3d_step'],
+                            nosym=nosym,
+                            nstep=200,
+                            electron_maxstep=1000,
+                            mixing_mode='local-TF',
+                            laue_reference='right',
+                            rism3d_maxstep=int(5e5),
+                            rism1d_maxstep=int(1e5),
+                            mdiis3d_size=15,
+                            mdiis1d_size=20,
+                            startingpot=rism_settings['startingpot'],
+                            startingwfc=rism_settings['startingwfc'],
+                            outdir=outdir,
+                            prefix='rism')
+        calc.set(atoms=atoms)
+        _post_process_rismespresso(calc, atoms, rism_settings)
+
+        # Create the input file
+        calc.initialize(atoms)
+
+
+def create_restart_input_file():
+    '''
+    This function will try to look for a FireWorks directory on this host that
+    contains the same calculation, but got cut off due to wall time. It will
+    then move us into that directory and modify the 'pw.in' file to do a
+    restart calculation instead of a calculation from scratch.
+    '''
+    launch_dir = _find_old_launch_directory()
+    os.chdir(launch_dir)
+    for line in fileinput.input(['pw.in'], inplace=True, backup='pw_old.in'):
+        if 'restart_mode' in line:
+            line.replace('from_scratch', 'restart')
+            break
+
+
+def _find_old_launch_directory(fw_json='FW.json'):
+    '''
+    Search for fireworks that look like the one we're trying to run now. If
+    there are any matching fireworks that have fizzled, ended with a walltime
+    error, and also happen to have launch directories on this same host, then
+    return the location of that firework launch directory.
+
+    Arg:
+        fw_json     String indicating the path of a JSON-formatted file that
+                    contains the FireWorks info you want to use as a comparison
+    Returns:
+        launch_dir  String indicating the path of the last walltimed launch
+                    directory that matches the provided firework (if it's on
+                    this host). If there is no match, returns an empty string.
+    '''
+    lpad = _get_launchpad(fw_json)
+
+    # Get the IDs of the fizzled fireworks that match the one we're trying to
+    # run now
+    with open(fw_json, 'r') as file_handle:
         fw_info = json.load(file_handle)
-    fw_id = fw_info['fw_id']
-    outdir = settings['scratch_dir'] + '/%s' % fw_id
+    query = {'name.%s' % key: value for key, value in fw_info['name'].items()}
+    query['state'] = 'FIZZLED'
+    fws = list(lpad.fireworks.find(query=query, projection={'fw_id': 1, '_id': 0}))
+    fwids = [fw['fw_id'] for fw in fws]
 
-    # Set the run-time to 2 minutes less than the job manager's wall time
-    wall_time = settings['wall_time']
-    max_seconds = wall_time * 60 * 60 - 120
+    # Get the launch information for each of the matching fireworks
+    launches = list(lpad.launches.find(query={'fw_id': {'$in': fwids}},
+                                       projection={'fw_id': 1, 'launch_dir': 1, '_id': 0}))
+    launches = sorted(launches, key=lambda launch: launch['fw_id'], reverse=True)
 
-    # Use rismespresso to do the heavy lifting
-    calc = rismespresso(calcmode=calcmode,
-                        printforces=True,
-                        xc=rism_settings['xcf'],
-                        pw=rism_settings['encut'],
-                        kpts=rism_settings['kpts'],
-                        kptshift=(0, 0, 0),
-                        sigma=rism_settings['sigma'],
-                        smearing=rism_settings['smearing'],
-                        spinpol=rism_settings['spol'],
-                        psppath=pspdir,
-                        setups=setups,
-                        max_seconds=max_seconds,
-                        solvents=solvents,
-                        cations=cations,
-                        anions=anions,
-                        laue_starting_right=laue_starting_right,
-                        conv_thr=rism_settings['conv_elec'],
-                        laue_expand_right=rism_settings['laue_expand_right'],
-                        mdiis1d_step=rism_settings['mdiis1d_step'],
-                        rism1d_conv_thr=rism_settings['rism1d_conv_thr'],
-                        rism3d_conv_thr=rism_settings['rism3d_conv_thr'],
-                        rism3d_conv_level=rism_settings['rism3d_conv_level'],
-                        mdiis3d_step=rism_settings['mdiis3d_step'],
-                        nosym=nosym,
-                        nstep=200,
-                        electron_maxstep=1000,
-                        mixing_mode='local-TF',
-                        laue_reference='right',
-                        rism3d_maxstep=int(5e5),
-                        rism1d_maxstep=int(1e5),
-                        mdiis3d_size=15,
-                        mdiis1d_size=20,
-                        startingpot=rism_settings['startingpot'],
-                        startingwfc=rism_settings['startingwfc'],
-                        outdir=outdir,
-                        prefix='rism')
-    calc.set(atoms=atoms)
-    _post_process_rismespresso(calc, atoms, rism_settings)
+    # Find launches that ended in a walltime error
+    restart_message = 'Found an old launch directory; will try to restart there:  '
+    for launch in launches:
+        launch_dir = launch['launch_dir']
+        try:
+            for file_name in os.listdir(launch_dir):
+                if file_name.endswith('error'):
+                    with open(os.path.join(launch_dir, file_name), 'r') as file_handle:
+                        for line in reversed(file_handle.readlines()):
+                            if 'AssertionError: Calculation hit the wall time' in line:
+                                print(restart_message + launch_dir)
+                                return launch_dir
 
-    # Create the input file
-    calc.initialize(atoms)
+                # Recursive restart, i.e., if we are looking at a launch_dir that
+                # already jumped back into an older launch_dir, then follow it
+                elif file_name.endswith('out'):
+                    with open(os.path.join(launch_dir, file_name), 'r') as file_handle:
+                        for line in file_handle.readlines():
+                            if line.startswith(restart_message):
+                                launch_dir = line.split(restart_message)[-1]
+                                return launch_dir
+
+        # Move on if the launch directory doesn't exist on this host
+        except FileNotFoundError:
+            continue
+    return ''
+
+
+def _get_launchpad(submission_script='FW_submit.script'):
+    '''
+    This function assumes that you're in a directory where a "FW_submit.script"
+    exists and contains the location of your launchpad.yaml file. It then uses
+    this yaml file to instantiate a LaunchPad object for you.
+
+    Arg:
+        submission_script   String indicating the path of the job submission
+                            script used to launch this firework. It should
+                            contain an `rlaunch` command in it.
+    Returns:
+        lpad    A configured and authenticated `fireworks.LaunchPad` object
+    '''
+    # Look for the line in the submission script that has `rlaunch`
+    with open(submission_script, 'r') as file_handle:
+        for line in file_handle.readlines():
+            if line.startswith('rlaunch'):
+                break
+
+    # The line with `rlaunch` should also have the location of the launchpad
+    words = line.split(' ')
+    for i, word in enumerate(words):
+        if word == '-l':
+            lpad_file = words[i+1]
+            break
+
+    # Instantiate the lpad with the yaml and return it
+    lpad = LaunchPad.from_file(lpad_file)
+    return lpad
 
 
 def _parse_atoms(atom_hex):
