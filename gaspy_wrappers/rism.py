@@ -173,7 +173,7 @@ def _find_old_launch_directory(fw_json='FW.json'):
                     directory that matches the provided firework (if it's on
                     this host). If there is no match, returns an empty string.
     '''
-    lpad = _get_launchpad(fw_json)
+    lpad = _get_launchpad()
 
     # Get the IDs of the fizzled fireworks that match the one we're trying to
     # run now
