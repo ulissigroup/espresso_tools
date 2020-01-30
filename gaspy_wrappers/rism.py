@@ -181,11 +181,11 @@ def _find_old_launch_directory(fw_json='FW.json'):
         fw_info = json.load(file_handle)
     query = {'name.%s' % key: value for key, value in fw_info['name'].items()}
     query['state'] = 'FIZZLED'
-    fws = list(lpad.fireworks.find(query=query, projection={'fw_id': 1, '_id': 0}))
+    fws = list(lpad.fireworks.find(filter=query, projection={'fw_id': 1, '_id': 0}))
     fwids = [fw['fw_id'] for fw in fws]
 
     # Get the launch information for each of the matching fireworks
-    launches = list(lpad.launches.find(query={'fw_id': {'$in': fwids}},
+    launches = list(lpad.launches.find(filter={'fw_id': {'$in': fwids}},
                                        projection={'fw_id': 1, 'launch_dir': 1, '_id': 0}))
     launches = sorted(launches, key=lambda launch: launch['fw_id'], reverse=True)
 
