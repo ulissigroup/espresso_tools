@@ -10,9 +10,23 @@ import os
 import numpy as np
 import ase.io
 from ase import Atoms
+from ase.visualize import view
 from ase.constraints import FixAtoms
 from ase.calculators.singlepoint import SinglePointCalculator
 from .qe_units import hartree, rydberg, bohr
+
+
+def view_output(output_name):
+    '''
+    This function will try to read a QE output file and then use
+    `ase.visualize.view` to look at the trajectory.
+
+    Arg:
+        output_name     A string indicating the path of the output file you
+                        want to visualize
+    '''
+    images = read_positions_qe(output_name)
+    view(images)
 
 
 def write_traj(qe_log_name=None, output_traj_name='all.traj'):
@@ -34,7 +48,7 @@ def write_traj(qe_log_name=None, output_traj_name='all.traj'):
         qe_log_name = _find_qe_output_name()
 
     check_for_completion(qe_log_name)
-    images = read_positions_qe(qe_log_name, output_traj_name)
+    images = read_positions_qe(qe_log_name)
     ase.io.write(output_traj_name, images)
     return images
 
@@ -71,7 +85,7 @@ def check_for_completion(qe_log_name):
     assert not walltime_flag, ('Calculation hit the wall time; aborting the writing of traj file')
 
 
-def read_positions_qe(qe_output_name, output_traj_name, index=-1):
+def read_positions_qe(qe_output_name):
     """
     Input a QE logfile name and it extracts the postions and cells to build a
     trajectory file.
