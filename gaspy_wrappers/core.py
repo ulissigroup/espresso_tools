@@ -148,7 +148,7 @@ def _run_on_slurm(nodes, cores_per_node, pw_executable):
                             Espresso executable file you want to use
     '''
     command = ('srun --nodes=%i ' % nodes +
-               '--ntasks=%i ' % nodes * cores_per_node +
+               '--ntasks=%i ' % (nodes * cores_per_node) +
                '%s ' % pw_executable +
                '-npools %i ' % nodes +
                '-ndiag %i ' % int(math.sqrt(cores_per_node))**2 +
