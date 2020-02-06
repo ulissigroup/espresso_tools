@@ -130,132 +130,141 @@ def extract_coordinates(qe_output_name):
     ***  pwscf does not automatically write all ***
     ***  coordinates in bohr, while CP does     ***
     """
-    # establish QE code (pw.x/cp.x) and version
-    qeprogram, qeversion = [i.split() for i in os.popen(
-        'grep Program %s' % (qe_output_name)).readlines()][0][1:3]
-    if qeprogram == 'PWSCF':
-        unitscale = 1.      # pw
-        lvscale = float(
-            os.popen(
-                'grep \' lattice parameter (alat)\' %s' %
-                (qe_output_name)).readline().split()[4]) * bohr
-        poscmd = 'sed -e \'/./{H;$!d;}\' -e \'x;/ATOMIC_POS/!d;\' %s | sed -e \'/^ *$/d\' ' % (
-            qe_output_name)
-        cellcmd = 'sed -e \'/./{H;$!d;}\' -e \'x;/CELL_PARAM/!d;\' %s | sed -e \'/^ *$/d\' ' % (
-            qe_output_name)
-        # sed -e '/./{H;$!d;}' -e 'x;/CELL_PARAM/!d;' %s | sed -e '/^ *$/d' '
-        # %(qe_output_name)
-        celltranspose = 0
-
-    elif qeprogram == 'CP':
-        unitscale = bohr    # cp
-        lvscale = 1.0     # updated later for non vc-relax pwscf
-        poscmd = 'sed -n \'/ATOMIC_POS/,/ATOMIC_VEL/p\' %s | sed -e \'/VELOCITIES/d\' -e \'/^ *$/d\' ' % (
-            qe_output_name)
-        cellcmd = 'sed -n \'/   CELL_PARAM/,/System/p\' %s | sed -e \'/System/d\' -e \'/^ *$/d\' ' % (
-            qe_output_name)
-        # sed -n '/   CELL_PARAM/,/System/p ' %s | sed -e '/System/d' -e '/^
-        # *$/d'
-        celltranspose = 1
-
-    print(
-        "%s calculation: scaling lattice coordinates by %f" %
-        (qeprogram, unitscale))
-
-    # extract atomic positions and lattice parameters ( *** add a check for atomic coordinates ***)
-    # PW writes lattice vectors as
-    #   CELL_PARAMETERS (alat = lattice constant in bohr)
-    #     avec
-    #     bvec
-    #     cvec
-    # while CP writes them as
-    #   CELL_PARAMETERS
-    #     avec bvec cvec
-    # i.e. they are transposed and always default to bohr
-
-    poscoord = os.popen(poscmd)
-    posraw = [i for i in poscoord.readlines()]
-    pos = [i.split() for i in posraw if 'final' not in i]
-    poslineno = [i for i, line in enumerate(pos) for word in line if 'POSITIONS' in word]
-
-    # establish absolute or relative coordinates
-    if 'crystal' in pos[0][-1]:
-        pscale = lvscale
-        print("crystal coordinates")
-    elif 'angstrom' or 'bohr' in pos[0][-1]:
-        pscale = 1.
-        print("angstrom/bohr coordinates")
-
-    # extract cell lattice vectors
-    cellcoord = os.popen(cellcmd)
-    cellraw = [i for i in cellcoord.readlines()]
-    # works for CP MD or variable-cell PWSCF/CP (e.g., bulk relaxations)
-    if cellraw:
-        celllineno = [i for i, val in enumerate(cellraw) if 'CELL' in val]
-        scell = [i.split() for i in cellraw]
-    # PWSCF non variable-cell (e.g., everything else)
-    else:
-        cellcoord = os.popen('sed -n \'/a(1)/,/a(3)/p \' %s' % (qe_output_name))
-        cellraw = [i for i in cellcoord.readlines()]
-        cellraw = cellraw[-3:]
-        nsw = len(poslineno)
-        celllineno = [i * 4 for i in range(nsw)]
-        # similar formatting to others but without CELL
-        scell = [['CELL_PARAMETERS']] + [i.split()[3:6] for i in cellraw]
-        scell = nsw * scell
-
-    # scale vectors and units appropriately
-    latscale = unitscale * pscale
-    # Usually works with variable cell sizes
     try:
-        if 'angstrom' in scell[0][1]:
-            cellscale = 1.
+        # establish QE code (pw.x/cp.x) and version
+        qeprogram, qeversion = [i.split() for i in os.popen('grep Program %s' % (qe_output_name)).readlines()][0][1:3]
+        if qeprogram == 'PWSCF':
+            unitscale = 1.      # pw
+            lvscale = float(
+                os.popen(
+                    'grep \' lattice parameter (alat)\' %s' %
+                    (qe_output_name)).readline().split()[4]) * bohr
+            poscmd = 'sed -e \'/./{H;$!d;}\' -e \'x;/ATOMIC_POS/!d;\' %s | sed -e \'/^ *$/d\' ' % (
+                qe_output_name)
+            cellcmd = 'sed -e \'/./{H;$!d;}\' -e \'x;/CELL_PARAM/!d;\' %s | sed -e \'/^ *$/d\' ' % (
+                qe_output_name)
+            # sed -e '/./{H;$!d;}' -e 'x;/CELL_PARAM/!d;' %s | sed -e '/^ *$/d' '
+            # %(qe_output_name)
+            celltranspose = 0
+
+        elif qeprogram == 'CP':
+            unitscale = bohr    # cp
+            lvscale = 1.0     # updated later for non vc-relax pwscf
+            poscmd = 'sed -n \'/ATOMIC_POS/,/ATOMIC_VEL/p\' %s | sed -e \'/VELOCITIES/d\' -e \'/^ *$/d\' ' % (
+                qe_output_name)
+            cellcmd = 'sed -n \'/   CELL_PARAM/,/System/p\' %s | sed -e \'/System/d\' -e \'/^ *$/d\' ' % (
+                qe_output_name)
+            # sed -n '/   CELL_PARAM/,/System/p ' %s | sed -e '/System/d' -e '/^
+            # *$/d'
+            celltranspose = 1
+
+        print("%s calculation: scaling lattice coordinates by %f" % (qeprogram, unitscale))
+
+        # extract atomic positions and lattice parameters ( *** add a check for atomic coordinates ***)
+        # PW writes lattice vectors as
+        #   CELL_PARAMETERS (alat = lattice constant in bohr)
+        #     avec
+        #     bvec
+        #     cvec
+        # while CP writes them as
+        #   CELL_PARAMETERS
+        #     avec bvec cvec
+        # i.e. they are transposed and always default to bohr
+
+        poscoord = os.popen(poscmd)
+        posraw = [i for i in poscoord.readlines()]
+        pos = [i.split() for i in posraw if 'final' not in i]
+        poslineno = [i for i, line in enumerate(pos) for word in line if 'POSITIONS' in word]
+
+        # establish absolute or relative coordinates
+        if 'crystal' in pos[0][-1]:
+            pscale = lvscale
+            print("crystal coordinates")
+        elif 'angstrom' or 'bohr' in pos[0][-1]:
+            pscale = 1.
+            print("angstrom/bohr coordinates")
+
+        # extract cell lattice vectors
+        cellcoord = os.popen(cellcmd)
+        cellraw = [i for i in cellcoord.readlines()]
+        # works for CP MD or variable-cell PWSCF/CP (e.g., bulk relaxations)
+        if cellraw:
+            celllineno = [i for i, val in enumerate(cellraw) if 'CELL' in val]
+            scell = [i.split() for i in cellraw]
+        # PWSCF non variable-cell (e.g., everything else)
         else:
+            cellcoord = os.popen('sed -n \'/a(1)/,/a(3)/p \' %s' % (qe_output_name))
+            cellraw = [i for i in cellcoord.readlines()]
+            cellraw = cellraw[-3:]
+            nsw = len(poslineno)
+            celllineno = [i * 4 for i in range(nsw)]
+            # similar formatting to others but without CELL
+            scell = [['CELL_PARAMETERS']] + [i.split()[3:6] for i in cellraw]
+            scell = nsw * scell
+
+        # scale vectors and units appropriately
+        latscale = unitscale * pscale
+        # Usually works with variable cell sizes
+        try:
+            if 'angstrom' in scell[0][1]:
+                cellscale = 1.
+            else:
+                cellscale = unitscale * lvscale
+        # Usually works with static cell sizes
+        except IndexError:
             cellscale = unitscale * lvscale
-    # Usually works with static cell sizes
-    except IndexError:
-        cellscale = unitscale * lvscale
 
-    # split positions and cell into each step
-    nsteps = len(poslineno) - 1
+        # split positions and cell into each step
+        nsteps = len(poslineno) - 1
 
-    steps = {}
-    if nsteps == 0:
-        steps[0] = {}
-        # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
-        # there)
-        pos_unformatted = pos[1:]
-        # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
-        # there)
-        cell_unformatted = scell[1:]
-        steps[0]['positions'] = format_positions(pos_unformatted, latscale)
-        steps[0]['cell'] = format_cell(
-            cell_unformatted, cellscale, celltranspose)
-    else:
-        for i in range(nsteps):
-            steps[i] = {}
-            # assumes that the ATOMIC_POSITIONS is still included, (why the +1
-            # is there)
-            pos_unformatted = pos[poslineno[i]:poslineno[i + 1]]
-            # assumes that the ATOMIC_POSITIONS is still included, (why the +1
-            # is there)
-            cell_unformatted = scell[celllineno[i] + 1:celllineno[i + 1]]
-            steps[i]['positions'] = format_positions(pos_unformatted, latscale)
-            steps[i]['cell'] = format_cell(
+        steps = {}
+        if nsteps == 0:
+            steps[0] = {}
+            # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
+            # there)
+            pos_unformatted = pos[1:]
+            # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
+            # there)
+            cell_unformatted = scell[1:]
+            steps[0]['positions'] = format_positions(pos_unformatted, latscale)
+            steps[0]['cell'] = format_cell(
                 cell_unformatted, cellscale, celltranspose)
+        else:
+            for i in range(nsteps):
+                steps[i] = {}
+                # assumes that the ATOMIC_POSITIONS is still included, (why the +1
+                # is there)
+                pos_unformatted = pos[poslineno[i]:poslineno[i + 1]]
+                # assumes that the ATOMIC_POSITIONS is still included, (why the +1
+                # is there)
+                cell_unformatted = scell[celllineno[i] + 1:celllineno[i + 1]]
+                steps[i]['positions'] = format_positions(pos_unformatted, latscale)
+                steps[i]['cell'] = format_cell(
+                    cell_unformatted, cellscale, celltranspose)
 
-        # add last step
-        steps[i + 1] = {}
-        # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
-        # there)
-        pos_unformatted = pos[poslineno[i + 1] + 1:]
-        # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
-        # there)
-        cell_unformatted = scell[celllineno[i + 1] + 1:]
-        steps[i + 1]['positions'] = format_positions(pos_unformatted, latscale)
-        steps[i +
-              1]['cell'] = format_cell(cell_unformatted, cellscale, celltranspose)
-    return steps
+            # add last step
+            steps[i + 1] = {}
+            # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
+            # there)
+            pos_unformatted = pos[poslineno[i + 1] + 1:]
+            # assumes that the ATOMIC_POSITIONS is still included, (why the +1 is
+            # there)
+            cell_unformatted = scell[celllineno[i + 1] + 1:]
+            steps[i + 1]['positions'] = format_positions(pos_unformatted, latscale)
+            steps[i +
+                  1]['cell'] = format_cell(cell_unformatted, cellscale, celltranspose)
+        return steps
+
+    except:  # noqa: E722
+        raise FailedToReadQeOutput('Failed to get the coordinates from %s' % qe_output_name)
+
+
+class FailedToReadQeOutput(RuntimeError):
+    '''
+    Custom error to indicate that we somehow failed to parse the output file of
+    QE
+    '''
+    pass
 
 
 def format_cell(cell_unformatted, cellscale=1.0, celltranspose=0):

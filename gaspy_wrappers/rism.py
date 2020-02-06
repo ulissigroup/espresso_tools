@@ -16,7 +16,7 @@ import numpy as np
 from ase.data import covalent_radii
 from fireworks import LaunchPad
 from .core import _run_qe, decode_trajhex_to_atoms
-from ..qe_pw2traj import _find_qe_output_name, read_positions_qe
+from ..qe_pw2traj import _find_qe_output_name, read_positions_qe, FailedToReadQeOutput
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
 from ..custom import hpc_settings, LJ_PARAMETERS
@@ -73,7 +73,7 @@ def create_rism_input_file(atom_hex, rism_settings):
         atoms = get_atoms_from_old_run()
 
     # Otherwise, we need to start from scratch
-    except FileNotFoundError:
+    except FailedToReadQeOutput:
         # Parse various input parameters/settings into formats accepted by the
         # `rismespresso` class
         atoms = _parse_atoms(atom_hex)
