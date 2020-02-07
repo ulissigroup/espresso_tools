@@ -626,7 +626,7 @@ def __update_molecular_parameters(calc, atoms, rism_settings):
                  constmu=None)
 
 
-def _read_fermi_from_output(qe_output_name):
+def _read_fermi_from_output(qe_output_name=None):
     '''
     This function will try to get the last Fermi energy reported in the RISM-QE
     log file.
