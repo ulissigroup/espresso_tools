@@ -10,6 +10,7 @@ __authors__ = ['Joel Varley', 'Kevin Tran']
 __emails__ = ['varley2@llnl.gov', 'ktran@andrew.cmu.edu']
 
 import os
+import sys
 import warnings
 import json
 import numpy as np
@@ -645,6 +646,14 @@ def _read_fermi_from_output(qe_output_name=None):
     # "the Fermi energy is    -4.6007 ev" so we grep it accordingly
     with open(qe_log_name) as file_handle:
         for line in reversed(file_handle.readlines()):
-            if 'the Fermy energy is' in line:
-                fermi = float(line.split('')[-2])
-                return fermi
+            if 'the Fermi energy is' in line:
+                fermi = float(line.split(' ')[-2])
+                break
+    try:
+        return fermi
+
+    # More detail error handling
+    except NameError as error:
+        message = ('happened because we could not find the Fermi energy from '
+                   'the output file %s' % qe_log_name)
+        raise type(error)(str(error) + message).with_traceback(sys.exc_info()[2])
