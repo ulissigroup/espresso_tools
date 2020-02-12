@@ -516,7 +516,6 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
     # Set the initial charges
     starting_charge = rism_settings['starting_charge']
     if starting_charge:
-        starting_charge = format_LJ(atoms, starting_charge)
         calc.set(starting_charge=starting_charge)
 
     # Whether or not you want to do just ESM (True), or ESM-RISM (False)
