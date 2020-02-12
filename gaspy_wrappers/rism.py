@@ -513,10 +513,10 @@ def _post_process_rismespresso(calc, atoms, rism_settings):
                             molecule
                             charge
     '''
-    # Set the initial charges
-    starting_charge = rism_settings['starting_charge']
-    if starting_charge:
-        calc.set(starting_charge=starting_charge)
+    # Set the system charge
+    tot_charge = rism_settings['tot_charge']
+    if tot_charge:
+        calc.set(tot_charge=tot_charge)
 
     # Whether or not you want to do just ESM (True), or ESM-RISM (False)
     esm_only = rism_settings['esm_only']
