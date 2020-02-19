@@ -96,9 +96,9 @@ def create_rism_input_file(atom_hex, rism_settings):
     fw_id = fw_info['fw_id']
     outdir = settings['scratch_dir'] + '/%s' % fw_id
 
-    # Set the run-time to 2 minutes less than the job manager's wall time
+    # Set the run-time to 5 minutes less than the job manager's wall time
     wall_time = settings['wall_time']
-    max_seconds = wall_time * 60 * 60 - 120
+    max_seconds = wall_time * 60 * 60 - 5*60
 
     # Use rismespresso to do the heavy lifting
     calc = rismespresso(calcmode=calcmode,
