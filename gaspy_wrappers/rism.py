@@ -205,7 +205,7 @@ def _find_previous_output_file(fw_json='FW.json'):
                             # time, then we know to return this output file
                             if 'AssertionError: Calculation hit the wall time' in line:
                                 print('Using atomic positions from previous calculation at:  ' + launch_dir)
-                                out_file = os.poth.join(launch_dir, file_name)
+                                out_file = os.path.join(launch_dir, file_name)
                                 return out_file
                     break
 
