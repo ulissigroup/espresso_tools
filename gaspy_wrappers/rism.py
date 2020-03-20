@@ -17,7 +17,7 @@ import numpy as np
 from ase.data import covalent_radii
 from fireworks import LaunchPad
 from .core import _run_qe, decode_trajhex_to_atoms
-from ..qe_pw2traj import _find_qe_output_name, read_positions_qe, FailedToReadQeOutput
+from ..qe_pw2traj import _find_qe_output_name, read_positions_qe
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
 from ..custom import hpc_settings, LJ_PARAMETERS
@@ -68,17 +68,13 @@ def create_rism_input_file(atom_hex, rism_settings):
     Returns:
         atoms   The `ase.Atoms` object that was decoded from the hex string.
     '''
+    atoms = _parse_atoms(atom_hex)
+
     # If we've already tried this calculation on this host and it timed out
-    # gracefully, then we instead restart that old calculation.
-    try:
-        atoms = get_atoms_from_old_run()
+    # gracefully, then we use the updated atomic positions instead
+    atoms = get_atoms_from_old_run(atoms)
 
-    # Otherwise, we need to start from scratch
-    except FailedToReadQeOutput:
-        # Parse various input parameters/settings into formats accepted by the
-        # `rismespresso` class
-        atoms = _parse_atoms(atom_hex)
-
+    # Make sure the stucture and settings are good for RISM
     pspdir, setups = populate_pseudopotentials(rism_settings['psps'], rism_settings['xcf'])
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
     laue_starting_right = _calculate_laue_starting_right(atoms)
@@ -144,20 +140,27 @@ def create_rism_input_file(atom_hex, rism_settings):
     calc.initialize(atoms)
 
 
-def get_atoms_from_old_run():
+def get_atoms_from_old_run(atoms):
     '''
     This function will try to look for a FireWorks directory on this host that
     contains the same calculation, but got cut off due to wall time. It will
     then move us into that directory and modify the 'pw.in' file to do a
     restart calculation instead of a calculation from scratch.
 
+    Arg:
+        atoms    An `ase.Atoms` object of the original structure, before the old run
     Returns:
         atoms   `ase.Atoms` object of the final image in the trajectory of the
                 previous run
     '''
+    # Grab the positions of the atoms
     old_output = _find_previous_output_file()
     images = read_positions_qe(old_output)
-    atoms = images[-1]
+    new_atoms = images[-1]
+
+    # Our position reader does not read constraints stably. So we can grab them
+    # from incumbent atoms and tack them onto the newer ones.
+    new_atoms.constraints = atoms.constraints
     return atoms
 
 
