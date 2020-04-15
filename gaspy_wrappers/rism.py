@@ -143,9 +143,7 @@ def create_rism_input_file(atom_hex, rism_settings):
 def get_atoms_from_old_run(atoms):
     '''
     This function will try to look for a FireWorks directory on this host that
-    contains the same calculation, but got cut off due to wall time. It will
-    then move us into that directory and modify the 'pw.in' file to do a
-    restart calculation instead of a calculation from scratch.
+    contains the same calculation, but got cut off due to wall time.
 
     Arg:
         atoms    An `ase.Atoms` object of the original structure, before the old run
@@ -153,14 +151,20 @@ def get_atoms_from_old_run(atoms):
         atoms   `ase.Atoms` object of the final image in the trajectory of the
                 previous run
     '''
-    # Grab the positions of the atoms
-    old_output = _find_previous_output_file()
-    images = read_positions_qe(old_output)
-    new_atoms = images[-1]
+    try:
+        # Grab the positions of the atoms
+        old_output = _find_previous_output_file()
+        images = read_positions_qe(old_output)
+        new_atoms = images[-1]
 
-    # Our position reader does not read constraints stably. So we can grab them
-    # from incumbent atoms and tack them onto the newer ones.
-    new_atoms.constraints = atoms.constraints
+        # Our position reader does not read constraints stably. So we can grab them
+        # from incumbent atoms and tack them onto the newer ones.
+        new_atoms.constraints = atoms.constraints
+
+    # If there is no old run, then just give the atoms back without modification
+    except FileNotFoundError:
+        pass
+
     return atoms
 
 
@@ -216,7 +220,9 @@ def _find_previous_output_file(fw_json='FW.json'):
         # Move on if the launch directory doesn't exist on this host
         except FileNotFoundError:
             continue
-    return ''
+
+    # If there is no previous run, say so
+    raise FileNotFoundError('No previous output file found')
 
 
 def _get_launchpad(submission_script='FW_submit.script'):
