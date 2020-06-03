@@ -83,7 +83,7 @@ def create_rism_input_file(atom_hex, rism_settings):
     try:
         nosym = rism_settings['nosym']
     except KeyError:
-        nosym = False
+        nosym = True
 
     # Get the FireWorks ID, which will be used as the directory for the
     # scratch/outdir files
