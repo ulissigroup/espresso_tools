@@ -17,7 +17,7 @@ import numpy as np
 from ase.data import covalent_radii
 from fireworks import LaunchPad
 from .core import _run_qe, decode_trajhex_to_atoms
-from ..qe_pw2traj import _find_qe_output_name, read_positions_qe, FailedToReadQeOutput
+from ..qe_pw2traj import _find_qe_output_name, read_positions_qe
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
 from ..custom import hpc_settings, LJ_PARAMETERS
@@ -68,17 +68,13 @@ def create_rism_input_file(atom_hex, rism_settings):
     Returns:
         atoms   The `ase.Atoms` object that was decoded from the hex string.
     '''
+    atoms = _parse_atoms(atom_hex)
+
     # If we've already tried this calculation on this host and it timed out
-    # gracefully, then we instead restart that old calculation.
-    try:
-        atoms = get_atoms_from_old_run()
+    # gracefully, then we use the updated atomic positions instead
+    atoms = get_atoms_from_old_run(atoms)
 
-    # Otherwise, we need to start from scratch
-    except FailedToReadQeOutput:
-        # Parse various input parameters/settings into formats accepted by the
-        # `rismespresso` class
-        atoms = _parse_atoms(atom_hex)
-
+    # Make sure the stucture and settings are good for RISM
     pspdir, setups = populate_pseudopotentials(rism_settings['psps'], rism_settings['xcf'])
     solvents, anions, cations = _parse_solvent(rism_settings, pspdir)
     laue_starting_right = _calculate_laue_starting_right(atoms)
@@ -87,7 +83,7 @@ def create_rism_input_file(atom_hex, rism_settings):
     try:
         nosym = rism_settings['nosym']
     except KeyError:
-        nosym = False
+        nosym = True
 
     # Get the FireWorks ID, which will be used as the directory for the
     # scratch/outdir files
@@ -96,9 +92,9 @@ def create_rism_input_file(atom_hex, rism_settings):
     fw_id = fw_info['fw_id']
     outdir = settings['scratch_dir'] + '/%s' % fw_id
 
-    # Set the run-time to 2 minutes less than the job manager's wall time
+    # Set the run-time to 5 minutes less than the job manager's wall time
     wall_time = settings['wall_time']
-    max_seconds = wall_time * 60 * 60 - 120
+    max_seconds = wall_time * 60 * 60 - 5*60
 
     # Use rismespresso to do the heavy lifting
     calc = rismespresso(calcmode=calcmode,
@@ -117,7 +113,10 @@ def create_rism_input_file(atom_hex, rism_settings):
                         cations=cations,
                         anions=anions,
                         laue_starting_right=laue_starting_right,
-                        conv_thr=rism_settings['conv_elec'],
+                        conv_thr=rism_settings['conv_thr'],
+                        degauss=rism_settings['degauss'],
+                        etot_conv_thr=rism_settings['etot_conv_thr'],
+                        forc_conv_thr=rism_settings['forc_conv_thr'],
                         laue_expand_right=rism_settings['laue_expand_right'],
                         mdiis1d_step=rism_settings['mdiis1d_step'],
                         rism1d_conv_thr=rism_settings['rism1d_conv_thr'],
@@ -133,6 +132,10 @@ def create_rism_input_file(atom_hex, rism_settings):
                         rism1d_maxstep=int(1e5),
                         mdiis3d_size=15,
                         mdiis1d_size=20,
+                        version_ndft_per_rism3d=1,
+                        ndft_per_rism3d=4,
+                        ndft_per_rism3d_start=1,
+                        ndft_per_rism3d_end=4,
                         startingpot=rism_settings['startingpot'],
                         startingwfc=rism_settings['startingwfc'],
                         outdir=outdir,
@@ -144,20 +147,31 @@ def create_rism_input_file(atom_hex, rism_settings):
     calc.initialize(atoms)
 
 
-def get_atoms_from_old_run():
+def get_atoms_from_old_run(atoms):
     '''
     This function will try to look for a FireWorks directory on this host that
-    contains the same calculation, but got cut off due to wall time. It will
-    then move us into that directory and modify the 'pw.in' file to do a
-    restart calculation instead of a calculation from scratch.
+    contains the same calculation, but got cut off due to wall time.
 
+    Arg:
+        atoms    An `ase.Atoms` object of the original structure, before the old run
     Returns:
         atoms   `ase.Atoms` object of the final image in the trajectory of the
                 previous run
     '''
-    old_output = _find_previous_output_file()
-    images = read_positions_qe(old_output)
-    atoms = images[-1]
+    try:
+        # Grab the positions of the atoms
+        old_output = _find_previous_output_file()
+        images = read_positions_qe(old_output)
+        new_atoms = images[-1]
+
+        # Our position reader does not read constraints stably. So we can grab them
+        # from incumbent atoms and tack them onto the newer ones.
+        new_atoms.constraints = atoms.constraints
+
+    # If there is no old run, then just give the atoms back without modification
+    except FileNotFoundError:
+        pass
+
     return atoms
 
 
@@ -205,14 +219,17 @@ def _find_previous_output_file(fw_json='FW.json'):
                             # time, then we know to return this output file
                             if 'AssertionError: Calculation hit the wall time' in line:
                                 print('Using atomic positions from previous calculation at:  ' + launch_dir)
-                                out_file = os.poth.join(launch_dir, file_name)
+                                out_file = file_name.split('.')[0] + '.out'
+                                out_file = os.path.join(launch_dir, out_file)
                                 return out_file
                     break
 
         # Move on if the launch directory doesn't exist on this host
         except FileNotFoundError:
             continue
-    return ''
+
+    # If there is no previous run, say so
+    raise FileNotFoundError('No previous output file found')
 
 
 def _get_launchpad(submission_script='FW_submit.script'):

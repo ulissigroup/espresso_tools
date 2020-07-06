@@ -78,11 +78,11 @@ def check_for_completion(qe_log_name):
                         log file. If `None` then looks for a `firework-*.log`
                         file.
     '''
-    failed_convergence_flag = os.popen('grep \'convergence NOT achieved\' %s' % qe_log_name).readline()
-    assert not failed_convergence_flag, ('Calculation did not converge; aborting the writing of traj file')
-
     walltime_flag = os.popen('grep \'Maximum CPU time exceeded\' %s' % qe_log_name).readline()
     assert not walltime_flag, ('Calculation hit the wall time; aborting the writing of traj file')
+
+    failed_convergence_flag = os.popen('grep \'convergence NOT achieved\' %s' % qe_log_name).readline()
+    assert not failed_convergence_flag, ('Calculation did not converge; aborting the writing of traj file')
 
 
 def read_positions_qe(qe_output_name):
