@@ -516,6 +516,12 @@ rism_keys = ['closure',                # pw str
              'solvents',               # entry of MOL files
              'cations',                # entry of MOL files
              'anions',                 # entry of MOL files
+
+             'version_ndft_per_rism3d',
+             'ndft_per_rism3d',
+             'ndft_per_rism3d_start',
+             'ndft_per_rism3d_end',
+             'reuse_corrfunc_rismscf',
              ]
 
 fcp_keys = ['fcp_conv_thr',      # pw float
@@ -1100,11 +1106,17 @@ d_input_types = {
             'rism1d_nproc',
             'rism1d_nproc_switch',
             'rism3d_maxstep',
+
+            'version_ndft_per_rism3d',
+            'ndft_per_rism3d',
+            'ndft_per_rism3d_start',
+            'ndft_per_rism3d_end',
         ],
         'bool': [
             'laue_both_hands',
             'laue_wall_lj6',
             'rism3d_planar_average',
+            'reuse_corrfunc_rismscf',
         ], },
     'fcp': {
         'str': [
