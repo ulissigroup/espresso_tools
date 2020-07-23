@@ -39,7 +39,7 @@ def hpc_settings():
 
     if 'quartz' in node_name:
         settings = {'manager': 'slurm',
-                    'qe_executable': '/usr/WS1/woodgrp/catalysis/Codes/Quartz/q-e-modified-pprism_beef/PW/src/pw.x',
+                    'qe_executable': '/usr/workspace/woodgrp/catalysis/Codes/Quartz/NEW_RISM/q-e-qe-6.1-rism_patched/bin/pw.x',
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'scratch_dir': '/p/lscratchh/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
