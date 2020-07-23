@@ -48,12 +48,12 @@ def hpc_settings():
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
-                    'qe_executable': '/usr/workspace/woodgrp/catalysis/Codes/Lassen/q-e-modified-pprism_beef_xl/bin/pw.x',
+                    'qe_executable': '/workspace/woodgrp/catalysis/Codes/QE/src/q-e-qe-6.1.2_esm-rism_patched_xl/lassen/bin/pw.x',
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'scratch_dir': '/p/gpfs1/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 40,
-                    'wall_time': 12}  # in hours
+                    'wall_time': 4}  # in hours
 
     else:
         raise ValueError('espresso_tools does not recognize the %s node. Please '
