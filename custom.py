@@ -48,7 +48,7 @@ def hpc_settings():
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
-                    'qe_executable': '/workspace/woodgrp/catalysis/Codes/QE/src/q-e-qe-6.1.2_esm-rism_patched_xl/lassen/bin/pw.x',
+                    'qe_executable': '/usr/WS1/woodgrp/catalysis/Codes/QE/src/q-e-qe-6.1.1_esm-rism_patched_xl/lassen/bin/pw.x',
                     'psp_path': '/usr/workspace/woodgrp/catalysis/pseudo',
                     'scratch_dir': '/p/gpfs1/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
