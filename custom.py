@@ -44,7 +44,7 @@ def hpc_settings():
                     'scratch_dir': '/p/lscratchh/%s/gaspy/' % getpass.getuser(),
                     'nodes': 4,
                     'cores_per_node': 36,
-                    'wall_time': 32}  # in hours
+                    'wall_time': 24}  # in hours
 
     elif 'lassen' in node_name:
         settings = {'manager': 'lsf',
