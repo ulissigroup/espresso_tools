@@ -96,6 +96,9 @@ def create_rism_input_file(atom_hex, rism_settings):
     wall_time = settings['wall_time']
     max_seconds = wall_time * 60 * 60 - 5*60
 
+    # Default restart mode to from_scratch
+    restart = rism_settings.get('restart', 'from_scratch')
+
     # Use rismespresso to do the heavy lifting
     calc = rismespresso(calcmode=calcmode,
                         printforces=True,
@@ -139,7 +142,8 @@ def create_rism_input_file(atom_hex, rism_settings):
                         startingpot=rism_settings['startingpot'],
                         startingwfc=rism_settings['startingwfc'],
                         outdir=outdir,
-                        prefix='rism')
+                        prefix='rism',
+                        restart=restart)
     calc.set(atoms=atoms)
     _post_process_rismespresso(calc, atoms, rism_settings)
 
