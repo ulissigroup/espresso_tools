@@ -168,8 +168,9 @@ def get_atoms_from_old_run(atoms):
         # from incumbent atoms and tack them onto the newer ones.
         new_atoms.constraints = atoms.constraints
 
-    # If there is no old run, then just give the atoms back without modification
-    except FileNotFoundError:
+    # If there is no old run or if we can't read the old file,
+    # then just give the atoms back without modification
+    except (FileNotFoundError, FailedToReadQeOutput):
         pass
 
     return atoms
