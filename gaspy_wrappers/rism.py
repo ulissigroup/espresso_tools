@@ -17,7 +17,7 @@ import numpy as np
 from ase.data import covalent_radii
 from fireworks import LaunchPad
 from .core import _run_qe, decode_trajhex_to_atoms
-from ..qe_pw2traj import _find_qe_output_name, read_positions_qe
+from ..qe_pw2traj import _find_qe_output_name, read_positions_qe, FailedToReadQeOutput
 from ..cpespresso_v3 import rismespresso
 from ..pseudopotentials import populate_pseudopotentials
 from ..custom import hpc_settings, LJ_PARAMETERS
@@ -175,6 +175,8 @@ def get_atoms_from_old_run(atoms):
     # If there is no old run or if we can't read the old file,
     # then just give the atoms back without modification
     except (FileNotFoundError, FailedToReadQeOutput):
+        warnings.warn('Tried to read atoms positions from the old output file (%s), but failed. '
+                      'Falling back to the original input atoms.' % old_output, RuntimeWarning)
         pass
 
     return atoms
